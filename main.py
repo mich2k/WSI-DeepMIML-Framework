@@ -4,6 +4,7 @@ import argparse
 
 
 
+
 def main():
     parser = argparse.ArgumentParser(description='Inference DeepMIML method on MIL datasets')
     parser.add_argument('--datasets', default='musk1', type=str, help='Choose MIL datasets from: musk1, musk2, elephant, fox, tiger [musk1]')
@@ -13,4 +14,7 @@ def main():
     parser.add_argument('--weight_decay', default=5e-3, type=float, help='Weight decay [5e-3]')
     parser.add_argument('--model', default='dsmil', type=str, help='Which MIL model [dsmil]')
     args = parser.parse_args()
-    
+    print(args)
+
+if(__name__ == '__main__'):
+    main()
