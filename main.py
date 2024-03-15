@@ -1,7 +1,9 @@
 import os, glob
 import argparse
-import feature_extractor
 
+from numpy import extract
+from sympy import factor
+from feature_extractor.extractor import FeatureExtractor
 
 def convalidate_args(args):
     return True
@@ -25,9 +27,9 @@ def main():
     print(type(args))
     we = {k: v for k, v in vars(args).items() if v is not None}
     print(type(we))
-
-    feature_ext = feature_extractor.FeatureExtractor()
-
+    
+    exty = FeatureExtractor('simclr_v2').model
+    exty.print_summary()
 
 if(__name__ == '__main__'):
     main()
