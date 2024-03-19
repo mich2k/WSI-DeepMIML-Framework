@@ -162,6 +162,10 @@ cython_debug/
 
 
 .vscode/
-*.ipynb
 *.h5
 *.pt
+*.pth
+*/**/*.JPEG
+*/**/LICENSE
+*/**/LICENCE
+*/**/ILSVRC2012_img_val

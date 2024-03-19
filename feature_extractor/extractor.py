@@ -19,7 +19,7 @@ class FeatureExtractor():
         pass
     
     def print_summary(self):
-        print("test")
+        print(self.model)
     
     @abstractmethod
     def compute_features(self):
@@ -29,6 +29,18 @@ class FeatureExtractor():
     
     
 class SimCLRv2(FeatureExtractor):
-    def __init__(self):
+
+
+    
+    def __init__(self, version="r152_3x_sk1"):
+        
+        self.versions = ['r50_1x_sk0', 'r152_3x_sk1']
+        
+        if version not in self.versions:
+            raise ValueError(f'Invalid version: {version}')
+        
         print(get_device())
+
+    def load_weights(self):
+        return super().load_weights()
     
