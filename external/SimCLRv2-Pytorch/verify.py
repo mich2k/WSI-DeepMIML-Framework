@@ -117,8 +117,8 @@ def run(pth_path, val_path, n_samples, batch=380): # default for debug
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SimCLR verifier')
-    parser.add_argument('-pth_path', default='ext/SimCLRv2-Pytorch/r101_1x_sk0.pth', type=str, help='path of the input checkpoint file')
-    parser.add_argument('-val_path',  default="ext/SimCLRv2-Pytorch/ILSVRC2012_img_val/", type=str, help='path of the validation dataset')
+    parser.add_argument('-pth_path', default='checkpoints/SimCLRv2-Pytorch/r101_1x_sk0.pth', type=str, help='path of the input checkpoint file')
+    parser.add_argument('-val_path',  default="datasets/ILSVRC2012_img_val/", type=str, help='path of the validation dataset')
     
     # n_samples = 0 takes the whole dataloader, as batch_size*n_sample,
     #   for instance being our dataset 50k it will try with 50000/380=131.579
