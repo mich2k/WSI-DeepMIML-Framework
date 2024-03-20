@@ -1,7 +1,7 @@
 import os
 import argparse
 from collections import Counter
-
+import numpy as np
 import torch
 from PIL import Image
 from tqdm import tqdm
@@ -9,7 +9,7 @@ import torchvision.transforms as transforms
 from torch.utils.data import Dataset, DataLoader
 
 from resnet import get_resnet, name_to_params
-torch.set_autocast_enabled(True)
+
 
 class ImagenetValidationDataset(Dataset):
     def __init__(self, val_path):
@@ -18,7 +18,7 @@ class ImagenetValidationDataset(Dataset):
         self.labels = []
         self.transform = transforms.Compose([transforms.Resize(256), transforms.CenterCrop(224), transforms.ToTensor()])
         with open(val_path + "val.txt") as f:
-            self.labels = [int(l.strip().split(' ')[1]) - 1 for l in f.readlines()]
+            self.labels = [int(l.strip().split(' ')[1]) for l in f.readlines()]
 
     def __len__(self):
         return len(self.labels)
@@ -28,19 +28,17 @@ class ImagenetValidationDataset(Dataset):
         return self.transform(img), self.labels[item]
 
 
-def accuracy(output, target, topk=(1,)):
-    maxk = max(topk)
-    _, pred = output.topk(maxk, 1, True, True)
-    pred = pred.t().cpu()
-    correct = pred.eq(target[0].view(1, -1).expand_as(pred))
-    res = []
-    for k in topk:
-        correct_k = correct[:k].view(-1).float().sum().item() # correct_k.view(-1).nonzero()
-        # in poche parole effettivamente ce ne sono di corrette
-        # MA, non sono altro che quelle in cui la classe target è proprio 0
-        res.append(correct_k)
-    how_many_had_zero = (target[0].shape[0] - target[0].nonzero().shape[0])
-    return res, how_many_had_zero
+def count_similar(arr1, arr2, offset=1):
+    return np.sum(np.abs(arr1 - arr2) <= offset)
+
+def accuracy(pred, target, topk=(1,)):
+    #pred = pred.t().cpu()
+    
+    correct = np.intersect1d(pred, target).shape[0]
+    #correct = pred.eq(target[0].view(1, -1).expand_as(pred))
+    #how_many_had_zero = (target[0].shape[0] - target[0].nonzero().shape[0])
+    correct_by_offset = count_similar(pred, target, 1)
+    return correct, correct_by_offset
 
 
 @torch.no_grad()
@@ -48,27 +46,29 @@ def run(pth_path, val_path, n_samples, batch=380): # default for debug
     device = 'cuda'
     dataset = ImagenetValidationDataset(val_path)
     data_loader = DataLoader(dataset, batch_size=batch, shuffle=False, pin_memory=True, num_workers=12)
+    
     model, _ = get_resnet(*name_to_params(pth_path))
     model.load_state_dict(torch.load(pth_path)['resnet'])
     model = model.to(device).eval()
     preds = []
     target = []
     
-    zero=0
-    counter=0
+    counter = 0
     
     for images, labels in tqdm(data_loader):
 
         if counter == n_samples and n_samples != 0: # since dataloader loads/samples batch_size at time we can early stop (easiest approach)
             break
-        _, pred = model(images.to(device), apply_fc=True).topk(1, dim=1)    # pred shape: (380, 1), (batch size, 1)
+        
+        if batch == 1:
+            pillow_image = transforms.ToPILImage()(images[0])
+        
+        p = model(images.to(device), apply_fc=True)
+        _, pred = p.topk(1, dim=1)
+        #_, pred = model(images.to(device), apply_fc=True).topk(1, dim=1)    # pred shape: (380, 1), (batch size, 1)
         
         preds.append(pred.squeeze(1).cpu())
         #print(pred)
-
-        if(pred.sum() == 0):    # dim=None reduces all dimensions
-            print(f"pred tensor is zero @ {zero}")
-            zero+=1
         
         target.append(labels)
         counter+=1
@@ -102,20 +102,15 @@ def run(pth_path, val_path, n_samples, batch=380): # default for debug
             total_correct += all_counters[i].most_common(1)[0][1] 
         except IndexError:
             #print(f"Empty counter at index {i}") # most_common returns a list, if counter is empty then we get index out of range with []
-            pass
-    print(f"Total correct: {total_correct}")
+            pass    
     
-    
-    real_beccati, how_many_targets_had_class_zero = accuracy(pred, target)
-    real_beccati = int(real_beccati[0])
+    correct, correct_by_offset = accuracy(p, t)
     
     print('\n----------------------------------------')
-    print(f"Beccati {real_beccati} su {n_samples*batch}")
-    print(f"Amongst these {how_many_targets_had_class_zero} had class zero as a target")
+    print(f"Accuracy {correct}/{n_samples*batch} -> {str(correct/(n_samples*batch)*100)[:5]}%")
+    print(f"Accuracy by offset {correct_by_offset}/{n_samples*batch} -> {str(correct_by_offset/(n_samples*batch)*100)[:5]}%")
     
-    print(f"Accuracy real: {str(real_beccati/(n_samples*batch)*100)[:5]}")
-    
-    print(f'ACC: {total_correct / (n_samples*batch) * 100}')
+    print(f'ACC: {total_correct}, {total_correct / (n_samples*batch) * 100}')
     print('----------------------------------------\n')
 
 
@@ -130,9 +125,10 @@ if __name__ == '__main__':
     #   so it will try with 132 batches, thus reaching 132*380=50160 samples
      
     parser.add_argument('-n_samples', default=1, type=int, help='number of batch_size samples load')
-    parser.add_argument('-batch_size', default=380, type=int, help='batch size')
+    parser.add_argument('-batch_size', default=128, type=int, help='batch size')
 
     args = parser.parse_args()
+    
     print('\n----------------------------------------')
     
     # fix:
