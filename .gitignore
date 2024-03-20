@@ -169,5 +169,6 @@ cython_debug/
 */**/LICENCE
 */**/ILSVRC2012_img_val
 */**/__pycache__
-test/
-*/**/r50_1x_sk0/**/*
+external
+datasets
+checkpoints
