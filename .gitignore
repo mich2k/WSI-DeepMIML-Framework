@@ -173,3 +173,5 @@ external
 datasets
 checkpoints
 *.zip
+external/*/**
+external/*
