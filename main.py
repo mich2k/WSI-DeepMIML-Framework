@@ -1,10 +1,21 @@
 import os, glob
 import argparse
 
-from feature_extractor.extractor import FeatureExtractor
+from feature_extractor.models.simclr_v2.simclr_v2 import SimCLRv2
 
 def convalidate_args(args):
     return True
+
+def build_extractor(model='simclr_v2'):
+    
+    extractors = {
+        'simclr_v2': SimCLRv2
+    }
+    
+    if model not in extractors:
+        raise NotImplementedError(f'Not implemented extractor: {model}')
+    
+    return extractors[model]()
 
 
 def main():
@@ -14,7 +25,7 @@ def main():
     parser.add_argument('--num_epoch', default=40, type=int, help='Number of total training epochs [40]')
     parser.add_argument('--cv_fold', default=2, type=int, help='Number of cross validation ma poi è fold [10]')
     parser.add_argument('--weight_decay', default=5e-3, type=float, help='Weight decay [5e-3]')
-    parser.add_argument('--extractor', default='simclr_v1', type=str, help='Which MIL model [simclrv1]')
+    parser.add_argument('--extractor', default='simclr_v2', type=str, help='Which MIL model [simclrv2]')
     parser.add_argument('--model', default='dsmil', type=str, help='Which MIL model [dsmil]')
     args = parser.parse_args()
     
@@ -22,11 +33,7 @@ def main():
         print('Invalid arguments')
         exit(1)
     
-    print(type(args))
-    we = {k: v for k, v in vars(args).items() if v is not None}
-    print(type(we))
-    
-    extractor = FeatureExtractor('simclr_v2')
+    extractor = build_extractor('simclr_v2')
     extractor.print_summary()
 
 if(__name__ == '__main__'):
