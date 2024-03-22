@@ -1,21 +1,24 @@
 import os, glob
 import argparse
-
+import torch
+from utils import ValidationDatasetLoader, init_distributed_mode
 from feature_extractor.models.simclr_v2.simclr_v2 import SimCLRv2
+from feature_extractor.models.dino.dino import DINO
 
 def convalidate_args(args):
     return True
 
-def build_extractor(model='simclr_v2'):
+def build_extractor(model='simclr_v2', dataloader=None):
     
     extractors = {
-        'simclr_v2': SimCLRv2
+        'simclr_v2': SimCLRv2,
+        'dino': DINO
     }
     
     if model not in extractors:
         raise NotImplementedError(f'Not implemented extractor: {model}')
     
-    return extractors[model]()
+    return extractors[model](dataloader)
 
 
 def main():
@@ -27,14 +30,30 @@ def main():
     parser.add_argument('--weight_decay', default=5e-3, type=float, help='Weight decay [5e-3]')
     parser.add_argument('--extractor', default='simclr_v2', type=str, help='Which feature extractor [simclrv2]')
     parser.add_argument('--model', default='dsmil', type=str, help='Which MIL model [dsmil]')
+    parser.add_argument('--num_workers', default=10, type=int, help='Number of data loading workers per GPU.')
+    parser.add_argument('--batch_size_per_gpu', default=128, type=int, help='Per-GPU batch-size')
+    parser.add_argument("--dist_url", default="env://", type=str, help="""url used to set up
+        distributed training; see https://pytorch.org/docs/stable/distributed.html""")
     args = parser.parse_args()
     
     if not convalidate_args(args):
         print('Invalid arguments')
         exit(1)
     
-    extractor = build_extractor('simclr_v2')
-    extractor.print_summary()
+    #extractor = build_extractor('simclr_v2')
+    #extractor.print_summary()
+    
+    init_distributed_mode(args)
+    dataset_val = ValidationDatasetLoader('imagenet', 'datasets/ILSVRC2012_img_val/')
+    val_loader = torch.utils.data.DataLoader(
+        dataset_val,
+        batch_size=args.batch_size_per_gpu,
+        num_workers=args.num_workers,
+        pin_memory=True,
+    )
+    extractor_dino = build_extractor('dino', val_loader)
+    extractor_dino.load_weights()
+    extractor_dino.validate_network(val_loader)
     
     # dovremo creare 2 opzioni: preloaded features e to-compute features, per ora assumiamo vadano fatte comunque passare per l'estrattore
         # successivamente reperiremo i benchmark dataset con le features pre-calcolate
