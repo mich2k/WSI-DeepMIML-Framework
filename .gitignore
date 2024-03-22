@@ -172,10 +172,7 @@ cython_debug/
 external
 datasets
 checkpoints
-<<<<<<< Updated upstream
 *.zip
 external/*/**
 external/*
-=======
 *.json
->>>>>>> Stashed changes
