@@ -4,12 +4,15 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class FeatureExtractor():
     
-    def __init__(self):
+    def __init__(self, dataloader):
         self.version = "default"
         self.versions = []
         self.device=get_device()
+        self.dataloader = dataloader
+
 
 
                   

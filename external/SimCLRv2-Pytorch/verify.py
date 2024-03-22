@@ -45,6 +45,7 @@ def accuracy(pred, target, topk=(1,)):
 def run(pth_path, val_path, n_samples, batch=380): # default for debug
     device = 'cuda'
     dataset = ImagenetValidationDataset(val_path)
+    
     data_loader = DataLoader(dataset, batch_size=batch, shuffle=False, pin_memory=True, num_workers=12)
     
     model, _ = get_resnet(*name_to_params(pth_path))

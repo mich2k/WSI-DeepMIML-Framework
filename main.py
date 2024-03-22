@@ -19,13 +19,13 @@ def build_extractor(model='simclr_v2'):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Inference DeepMIML method on MIL datasets')
+    parser = argparse.ArgumentParser(description='Inference DeepMIML method on MIL datasets exploting DiffInfinite')
     parser.add_argument('--datasets', default='musk1', type=str, help='Choose MIL datasets from: TCGA, Camelyon16, Synthetic (diffinfinite)')
     parser.add_argument('--lr', default=0.0002, type=float, help='Initial learning rate [0.0002]')
-    parser.add_argument('--num_epoch', default=40, type=int, help='Number of total training epochs [40]')
-    parser.add_argument('--cv_fold', default=2, type=int, help='Number of cross validation ma poi è fold [10]')
+    parser.add_argument('--num_epoch', default=40, type=int, help='Number of aggregator total training epochs[40]')
+    parser.add_argument('--cv_fold', default=2, type=int, help='Number of cross validation k-fold [10]')
     parser.add_argument('--weight_decay', default=5e-3, type=float, help='Weight decay [5e-3]')
-    parser.add_argument('--extractor', default='simclr_v2', type=str, help='Which MIL model [simclrv2]')
+    parser.add_argument('--extractor', default='simclr_v2', type=str, help='Which feature extractor [simclrv2]')
     parser.add_argument('--model', default='dsmil', type=str, help='Which MIL model [dsmil]')
     args = parser.parse_args()
     
@@ -35,6 +35,12 @@ def main():
     
     extractor = build_extractor('simclr_v2')
     extractor.print_summary()
+    
+    # dovremo creare 2 opzioni: preloaded features e to-compute features, per ora assumiamo vadano fatte comunque passare per l'estrattore
+        # successivamente reperiremo i benchmark dataset con le features pre-calcolate
+    
+    
+    
 
 if(__name__ == '__main__'):
     main()
