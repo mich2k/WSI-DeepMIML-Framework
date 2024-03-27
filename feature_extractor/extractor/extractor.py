@@ -25,5 +25,5 @@ class FeatureExtractor():
         pass
     
     @abstractmethod
-    def compute_features(self):
+    def compute_features(self, x:torch.Tensor):
         pass
