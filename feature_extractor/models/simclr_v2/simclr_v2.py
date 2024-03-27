@@ -6,8 +6,8 @@ import torch
 
 class SimCLRv2(FeatureExtractor):
 
-    def __init__(self, version="r50_1x_sk0"):
-        super().__init__()
+    def __init__(self, dataloader, version="r50_1x_sk0"):
+        super().__init__(dataloader)
                 
         self.versions = ['r50_1x_sk0', 'r101_1x_sk0', 'r152_3x_sk1']
         
@@ -24,6 +24,6 @@ class SimCLRv2(FeatureExtractor):
         self.model = self.model.to(self.device).eval()
 
     
-    def compute_features(self):
-        return super().compute_features()
+    def compute_features(self, x:torch.Tensor):
+        return self.model(x)
     

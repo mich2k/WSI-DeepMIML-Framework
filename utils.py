@@ -237,6 +237,8 @@ def init_distributed_mode(args):
         args.rank, args.gpu, args.world_size = 0, 0, 1
         os.environ['MASTER_ADDR'] = '127.0.0.1'
         os.environ['MASTER_PORT'] = '29500'
+    elif torch.backends.mps.is_available():
+        print("Will run on one GPU on Apple MPS")
     else:
         print('Does not support training without GPU.')
         sys.exit(1)
