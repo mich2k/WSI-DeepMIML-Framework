@@ -39,7 +39,12 @@ def count_similar(arr1, arr2, offset=1):
 def accuracy(pred, target, topk=(1,)):
     #pred = pred.t().cpu()
     
-    correct = np.intersect1d(pred, target).shape[0]
+    #correct = np.intersect1d(pred, target).shape[0]
+
+    correct = np.sum(pred == target)
+
+    #correct = (pred == target).sum().item()
+
     #correct = pred.eq(target[0].view(1, -1).expand_as(pred))
     #how_many_had_zero = (target[0].shape[0] - target[0].nonzero().shape[0])
     correct_by_offset = count_similar(pred, target, 1)
@@ -131,7 +136,7 @@ if __name__ == '__main__':
     #   so it will try with 132 batches, thus reaching 132*380=50160 samples
      
     parser.add_argument('-n_samples', default=5, type=int, help='number of batch_size samples load')
-    parser.add_argument('-batch_size', default=256, type=int, help='batch size')
+    parser.add_argument('-batch_size', default=128, type=int, help='batch size')
 
     args = parser.parse_args()
     
