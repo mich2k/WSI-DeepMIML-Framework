@@ -1,9 +1,15 @@
 import os, glob
 import argparse
 import torch
-from utils import ValidationDatasetLoader, init_distributed_mode
+from utils import ValidationDatasetLoader, init_distributed_mode, get_device
 from feature_extractor.models.simclr_v2.simclr_v2 import SimCLRv2
 from feature_extractor.models.dino.dino import DINO
+
+def get_sample_batch(n, channels=3):
+    inputs = []
+    for i in range(n):
+        inputs.append(torch.randn((channels,255,255)))
+    return torch.stack(inputs).to(get_device())
 
 def convalidate_args(args):
     return True
@@ -57,17 +63,14 @@ def main():
     # extractor_dino.load_weights()
     # extractor_dino.validate_network(val_loader)
     
-    input1 = torch.randn((3,255,255))
-    input2 = torch.randn((3,255,255))
-    input3 = torch.randn((3,255,255))
-    inputs = [input1,input2,input3]
-    for x in inputs:
-        x=x.unsqueeze(0)
-    input_batch = torch.stack(inputs)
+    input_batch = get_sample_batch(3)
+
+    extractor.load_weights()
 
     features = extractor.compute_features(input_batch)
 
     print(features.shape)
+
     # dovremo creare 2 opzioni: preloaded features e to-compute features, per ora assumiamo vadano fatte comunque passare per l'estrattore
         # successivamente reperiremo i benchmark dataset con le features pre-calcolate
     
