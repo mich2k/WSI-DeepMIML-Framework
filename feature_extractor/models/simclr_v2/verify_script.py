@@ -60,6 +60,8 @@ def run(pth_path, val_path, n_samples, batch=380): # default for debug
     
     model, _ = get_resnet(*name_to_params(pth_path))
     model.load_state_dict(torch.load(pth_path)['resnet'])
+
+    
     model = model.to(device).eval()
     preds = []
     target = []

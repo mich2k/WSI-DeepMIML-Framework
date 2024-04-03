@@ -23,6 +23,9 @@ class SimCLRv2(FeatureExtractor):
         self.model.load_state_dict(torch.load('checkpoints/' + self.version + '.pth')['resnet'])
         self.model = self.model.to(self.device).eval()
     
-    def compute_features(self, x:torch.Tensor):
-        return self.model(x)
+    def compute_features(self, x:torch.Tensor, eval=False):
+        if eval:
+            return self.model(x, apply_fc=True)
+        else:
+            return self.model(x)
     

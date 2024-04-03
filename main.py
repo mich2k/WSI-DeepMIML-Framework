@@ -1,7 +1,7 @@
 import os, glob
 import argparse
 import torch
-from utils import ValidationDatasetLoader, init_distributed_mode, get_device
+from utils import ImageNetValidationDatasetLoader, get_device
 from feature_extractor.models.simclr_v2.simclr_v2 import SimCLRv2
 from feature_extractor.models.dino.dino import DINO
 
@@ -46,30 +46,16 @@ def main():
         print('Invalid arguments')
         exit(1)
     
-    input_batch = ValidationDatasetLoader('','')
     extractor = build_extractor('simclr_v2')
     #extractor.print_summary()
-    
-
-    #init_distributed_mode(args)
-    # dataset_val = ValidationDatasetLoader('imagenet', 'datasets/ILSVRC2012_img_val/')
-    # val_loader = torch.utils.data.DataLoader(
-    #     dataset_val,
-    #     batch_size=args.batch_size_per_gpu,
-    #     num_workers=args.num_workers,
-    #     pin_memory=True,
-    # )
-    # extractor_dino = build_extractor('dino', val_loader)
-    # extractor_dino.load_weights()
-    # extractor_dino.validate_network(val_loader)
     
     input_batch = get_sample_batch(3)
 
     extractor.load_weights()
 
-    features = extractor.compute_features(input_batch)
+    #features = extractor.compute_features(input_batch)
 
-    print(features.shape)
+    extractor.benchmark('datasets/ILSVRC2012_img_val/', 5, 380)
 
     # dovremo creare 2 opzioni: preloaded features e to-compute features, per ora assumiamo vadano fatte comunque passare per l'estrattore
         # successivamente reperiremo i benchmark dataset con le features pre-calcolate
