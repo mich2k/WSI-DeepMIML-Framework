@@ -98,4 +98,5 @@ class FeatureExtractor():
         print(f"Accuracy by offset {correct_by_offset}/{n_samples*batch} -> {str(correct_by_offset/(n_samples*batch)*100)[:5]}%")
 
         print(f'ACC: {total_correct}, {total_correct / (n_samples*batch) * 100}')
+
         print('----------------------------------------\n')

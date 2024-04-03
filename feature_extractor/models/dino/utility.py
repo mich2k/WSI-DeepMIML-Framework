@@ -58,6 +58,7 @@ def load_pretrained_linear_weights(linear_classifier, model_name, patch_size):
     if url is not None:
         print("We load the reference pretrained linear weights.")
         state_dict = torch.hub.load_state_dict_from_url(url="https://dl.fbaipublicfiles.com/dino/" + url, map_location=get_device(), progress=True)["state_dict"]
+        state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
         linear_classifier.load_state_dict(state_dict, strict=True)
     else:
         print("We use random linear weights.")

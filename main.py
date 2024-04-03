@@ -46,7 +46,7 @@ def main():
         print('Invalid arguments')
         exit(1)
     
-    extractor = build_extractor('simclr_v2')
+    extractor = build_extractor('dino')
     #extractor.print_summary()
     
     input_batch = get_sample_batch(3)
@@ -55,7 +55,7 @@ def main():
 
     #features = extractor.compute_features(input_batch)
 
-    extractor.benchmark('datasets/ILSVRC2012_img_val/', 5, 380)
+    extractor.benchmark('datasets/ILSVRC2012_img_val/', 0, 32)
 
     # dovremo creare 2 opzioni: preloaded features e to-compute features, per ora assumiamo vadano fatte comunque passare per l'estrattore
         # successivamente reperiremo i benchmark dataset con le features pre-calcolate
