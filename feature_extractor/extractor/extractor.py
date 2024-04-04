@@ -73,7 +73,7 @@ class FeatureExtractor():
         pass
     
     def set_versions(self, versions:Version):
-        self.version = versions
+        self.versions = versions
         self._set_parent_in_versions()
     
     def is_version_id_supported(self, version_id:str):
