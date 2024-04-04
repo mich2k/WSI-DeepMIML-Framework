@@ -77,10 +77,13 @@ class FeatureExtractor():
         self._set_parent_in_versions()
     
     def is_version_id_supported(self, version_id:str):
+        flag = False
         for version in self.versions:
             if version_id == version.get_version_id():
-                return True
-        return False
+                flag = True
+        if not flag:
+            raise NotImplementedError(f'Invalid version: {version_id} for {self.__class__.__name__} extractor')
+
 
     def _set_parent_in_versions(self):
         for version in self.version:

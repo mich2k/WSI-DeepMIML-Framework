@@ -17,9 +17,8 @@ class SimCLRv2(FeatureExtractor):
             [Version('r50_1x_sk0', 100), Version('r101_1x_sk0', 100), Version('r152_3x_sk1', 100)]
         )
 
-        if not self.is_version_id_supported(version_id):
-            raise NotImplementedError(f'Invalid version: {version_id}')
-        
+        self.is_version_id_supported(version_id)
+                   
         self.version = Version(version_id, 100)
 
         self.model, _ = get_resnet(*name_to_params(self.version.get_version_id()))
