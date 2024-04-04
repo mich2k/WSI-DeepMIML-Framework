@@ -86,7 +86,7 @@ class FeatureExtractor():
 
 
     def _set_parent_in_versions(self):
-        for version in self.version:
+        for version in self.versions:
             version.parent_type = self.__class__.__name__
 
     @torch.no_grad()
