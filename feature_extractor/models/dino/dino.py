@@ -3,20 +3,28 @@ import sys
 import feature_extractor.models.dino.utility as utility
 from torch import nn
 from torchvision import models as torchvision_models
-from feature_extractor.extractor.extractor import FeatureExtractor
+from feature_extractor.extractor.extractor import FeatureExtractor, Version
 from feature_extractor.models.dino.linear_classifier import LinearClassifier
 from feature_extractor.models.dino import vision_transformer as vits
 
 class DINO(FeatureExtractor):
     # architectures: vit or resnet50
-    def __init__(self, dataloader, architecture="resnet50", patch_size=16, avgpool_patchtokens=False, n_last_blocks=4, num_labels=1000):
-        super().__init__(dataloader)
+    def __init__(self, dataloader, checkpoint_path, architecture="resnet50", patch_size=16, avgpool_patchtokens=False, n_last_blocks=4, num_labels=1000):
+        super().__init__(dataloader, checkpoint_path)
+        
         self.architecture = architecture
         self.patch_size = patch_size
         self.n_last_blocks = n_last_blocks
         self.avgpool_patchtokens = avgpool_patchtokens
-        self.model = None
         self.dataloader = dataloader
+        
+        self.model = None
+        
+        self.set_versions([Version('resnet50', 2048), Version('vit_base', 768), Version('vit_small', 384)])
+        self.is_version_id_supported(architecture)
+        self.version = Version(architecture, 100)
+        
+        
         
         if architecture in vits.__dict__.keys():
                 self.model = vits.__dict__[architecture](patch_size=patch_size, num_classes=0)
