@@ -36,7 +36,7 @@ class Version():
 
 
 class FeatureExtractor():
-    
+
     def __init__(self, dataloader, checkpoint_path, out_fc_dimensionality=-1):
         self.model = None
         self.version:Version = Version("default", 0, "default")
@@ -72,11 +72,19 @@ class FeatureExtractor():
     def bypass_backbone_fc(self):
         pass
     
+    def set_versions(self, versions:Version):
+        self.version = versions
+        self._set_parent_in_versions()
+    
     def is_version_id_supported(self, version_id:str):
         for version in self.versions:
             if version_id == version.get_version_id():
                 return True
         return False
+
+    def _set_parent_in_versions(self):
+        for version in self.version:
+            version.parent_type = self.__class__.__name__
 
     @torch.no_grad()
     def benchmark(self, val_path, n_samples=3, batch=380):

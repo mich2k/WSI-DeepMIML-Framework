@@ -13,7 +13,9 @@ class SimCLRv2(FeatureExtractor):
         self.device = get_device()
         
 
-        self.versions = [Version('r50_1x_sk0', 100), Version('r101_1x_sk0', 100), Version('r152_3x_sk1', 100)]
+        self.set_versions(
+            [Version('r50_1x_sk0', 100), Version('r101_1x_sk0', 100), Version('r152_3x_sk1', 100)]
+        )
 
         if not self.is_version_id_supported(version_id):
             raise NotImplementedError(f'Invalid version: {version_id}')
