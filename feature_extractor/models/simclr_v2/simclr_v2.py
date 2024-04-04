@@ -3,6 +3,8 @@ from feature_extractor.extractor.extractor import FeatureExtractor
 from .resnet import get_resnet, name_to_params
 import torch
 from utils import get_device
+from torch.nn import Identity
+
 
 class SimCLRv2(FeatureExtractor):
 
@@ -20,7 +22,7 @@ class SimCLRv2(FeatureExtractor):
 
 
     def load_weights(self):
-        self.model.load_state_dict(torch.load('checkpoints/' + self.version + '.pth')['resnet'])
+        self.model.load_state_dict(torch.load(self.checkpoint_path + self.version.getVersionPathName() + '.pth')['resnet'])
         self.model = self.model.to(self.device).eval()
     
     def compute_features(self, x:torch.Tensor, eval=False):
@@ -28,4 +30,7 @@ class SimCLRv2(FeatureExtractor):
             return self.model(x, apply_fc=True)
         else:
             return self.model(x)
-    
+
+    def bypass_backbone_fc(self):
+        super().bypass_backbone_fc()
+        self.model.fc = Identity()

@@ -5,16 +5,54 @@ from tqdm import tqdm
 from collections import Counter
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
+from torch.nn import Linear, Module, Sequential, Identity
 
+
+class FCLayer(Module):
+    def __init__(self, in_size, out_size=1):
+        super(FCLayer, self).__init__()
+        self.fc = Sequential(Linear(in_size, out_size))
+    def forward(self, feats):
+        x = self.fc(feats)
+        return feats, x
+
+
+class Version():
+    def __init__(self, id_legacy_pathname, backbone_dimensionality, parent_type):
+        self.id_legacy_pathname = id_legacy_pathname
+        self.backbone_dimensionality = backbone_dimensionality
+        self.parent_type = parent_type
+        self.undefined_version = False
+
+        if backbone_dimensionality == 0 or id_legacy_pathname == "default" or parent_type == "default":
+           self.undefined_version = True
+    
+    def get_dimensionality(self):
+        return self.backbone_dimensionality
+    
+    def getVersionPathName(self) -> str:
+        return self.id_legacy_pathname
 
 class FeatureExtractor():
     
-    def __init__(self, dataloader):
+    def __init__(self, dataloader, checkpoint_path, out_fc_dimensionality=-1):
         self.model = None
-        self.version = "default"
-        self.versions = []
-        self.device=get_device()
+        self.version:Version = Version("default", 0, "default")
+        self.checkpoint_path = checkpoint_path
+
+        self.versions:Version = []
+        self.device = get_device()
         self.dataloader = dataloader
+        self.has_custom_fc = False
+
+        # we might have aggregators which dont need an extra FC layer, hence we can leave the out_fc_dimensionality to -1 (<0)
+        # usually this is needed when we bypass the backbone fc by backbone.fc = nn.Identity() and we want to exit with a custom dimensionality
+
+        if not out_fc_dimensionality < 0:
+            self.fc = FCLayer(self.version.backbone_dimensionality, out_fc_dimensionality)
+            self.has_custom_fc = True
+        else:
+            self.bypass_backbone_fc()
                   
     def print_summary(self):
         print(self.model)
@@ -27,7 +65,11 @@ class FeatureExtractor():
     @abstractmethod
     def compute_features(self, x:torch.Tensor, eval):
         pass
-    
+
+    @abstractmethod
+    def bypass_backbone_fc(self):
+        pass
+
     @torch.no_grad()
     def benchmark(self, val_path, n_samples=3, batch=380):
         device = get_device()
