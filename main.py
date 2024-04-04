@@ -16,7 +16,7 @@ def get_sample_batch(n, channels=3):
 def convalidate_args(args):
     return True
 
-def build_extractor(model='simclr_v2', dataloader=None):
+def build_extractor(checkpoint_path, model='simclr_v2', dataloader=None):
     
     extractors = {
         'simclr_v2': SimCLRv2,
@@ -26,7 +26,7 @@ def build_extractor(model='simclr_v2', dataloader=None):
     if model not in extractors:
         raise NotImplementedError(f'Not implemented extractor: {model}')
     
-    return extractors[model](dataloader)
+    return extractors[model](dataloader, checkpoint_path)
 
 
 def load_config(config_path) -> Munch:
@@ -63,7 +63,7 @@ def main():
     config = load_config(args.config_path)
 
 
-    extractor = build_extractor(config.extractor, config.checkpoint_path)
+    extractor = build_extractor(config.checkpoint_path, config.extractor)
     #extractor.print_summary()
     
     input_batch = get_sample_batch(3)

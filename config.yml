@@ -1,2 +1,2 @@
 checkpoint_path: "checkpoints/"
-extractor: 'simclr_v2'            #  Which feature extractor [simclrv2]
+extractor: "simclr_v2"            #  Which feature extractor [simclrv2]

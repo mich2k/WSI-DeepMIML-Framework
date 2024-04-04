@@ -18,20 +18,22 @@ class FCLayer(Module):
 
 
 class Version():
-    def __init__(self, id_legacy_pathname, backbone_dimensionality, parent_type):
-        self.id_legacy_pathname = id_legacy_pathname
+    def __init__(self, version_id, backbone_dimensionality, parent_type = None):
+        self.version_id = version_id
         self.backbone_dimensionality = backbone_dimensionality
         self.parent_type = parent_type
         self.undefined_version = False
 
-        if backbone_dimensionality == 0 or id_legacy_pathname == "default" or parent_type == "default":
+        if backbone_dimensionality == 0 or version_id == "default" or parent_type == "default":
            self.undefined_version = True
     
     def get_dimensionality(self):
         return self.backbone_dimensionality
     
-    def getVersionPathName(self) -> str:
-        return self.id_legacy_pathname
+    def get_version_id(self) -> str:
+        return self.version_id
+    
+
 
 class FeatureExtractor():
     
@@ -69,6 +71,12 @@ class FeatureExtractor():
     @abstractmethod
     def bypass_backbone_fc(self):
         pass
+    
+    def is_version_id_supported(self, version_id:str):
+        for version in self.versions:
+            if version_id == version.get_version_id():
+                return True
+        return False
 
     @torch.no_grad()
     def benchmark(self, val_path, n_samples=3, batch=380):
