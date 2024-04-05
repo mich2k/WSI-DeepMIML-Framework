@@ -6,6 +6,7 @@ from collections import Counter
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 from torch.nn import Linear, Module, Sequential, Identity
+from munch import Munch
 
 
 class FCLayer(Module):
@@ -18,9 +19,9 @@ class FCLayer(Module):
 
 
 class Version():
-    def __init__(self, version_id, backbone_dimensionality, parent_type = None):
+    def __init__(self, version_id, props: Munch, parent_type = None):
         self.version_id = version_id
-        self.backbone_dimensionality = backbone_dimensionality
+        self.backbone_dimensionality = props.dimensionality
         self.parent_type = parent_type
     
     def get_dimensionality(self):
@@ -64,22 +65,13 @@ class FeatureExtractor():
         
            
     @abstractmethod
-    def _load_weights(self, current_version:Version):
+    def _load_weights(self, current_version:Version, apply_fc=False):
         pass
     
 
     @abstractmethod
-    def _build_versions(self):
-        pass
-
-    @abstractmethod
     def compute_features(self, x:torch.Tensor, eval):
         pass
-
-    @abstractmethod
-    def bypass_backbone_fc(self):
-        pass
-
     
     def _build_versions(self, versions:dict):
         for k,v in versions.items():

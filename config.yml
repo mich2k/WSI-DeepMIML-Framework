@@ -1,10 +1,22 @@
 checkpoint_path: "checkpoints/"
 
-using_extractor: "simclr_v2"
+using_extractor: "dino"
+using_version: "vit_base"
 
 extractors:
   simclr_v2:        #  Which feature extractor [simclr_v2] 
       versions:
-        r50_1x_sk0: 100
-        r101_1x_sk0: 100
-
+        r50_1x_sk0: 
+          dimensionality: 100
+        r101_1x_sk0: 
+          dimensionality: 100
+  dino:
+      versions:
+        resnet50: 
+          dimensionality: 2048
+        vit_base: 
+          dimensionality: 768
+          avgpool_patchtokens: True
+          n_last_blocks: 1
+        vit_small: 
+          dimensionality: 384

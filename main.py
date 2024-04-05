@@ -5,7 +5,7 @@ from utils import ImageNetValidationDatasetLoader, get_device
 from feature_extractor.models.simclr_v2.simclr_v2 import SimCLRv2
 from feature_extractor.models.dino.dino import DINO
 import yaml
-from munch import Munch, munchify, unmunchify
+from munch import Munch, munchify
 
 
 def get_sample_batch(n, channels=3):
@@ -27,9 +27,9 @@ def build_extractor(checkpoint_path, extractors, using_extractor='simclr_v2', da
     fallback_extractor = 'simclr_v2'
 
     try:
-        versions_dict = unmunchify(extractors[using_extractor].versions.toDict())
+        versions_dict = extractors[using_extractor].versions
     except KeyError:
-        versions_dict = unmunchify(extractors[fallback_extractor].versions.toDict())
+        versions_dict = extractors[fallback_extractor].versions
 
     try:
         return ext_factory[using_extractor](dataloader, checkpoint_path, versions_dict)
