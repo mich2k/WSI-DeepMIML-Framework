@@ -5,7 +5,8 @@ from utils import ImageNetValidationDatasetLoader, get_device
 from feature_extractor.models.simclr_v2.simclr_v2 import SimCLRv2
 from feature_extractor.models.dino.dino import DINO
 import yaml
-from munch import Munch, munchify
+from munch import Munch, munchify, unmunchify
+
 
 def get_sample_batch(n, channels=3):
     inputs = []
@@ -16,17 +17,27 @@ def get_sample_batch(n, channels=3):
 def convalidate_args(args):
     return True
 
-def build_extractor(checkpoint_path, model='simclr_v2', dataloader=None):
+def build_extractor(checkpoint_path, extractors, using_extractor='simclr_v2', dataloader=None):
     
-    extractors = {
+    ext_factory = {
         'simclr_v2': SimCLRv2,
         'dino': DINO
     }
-    
-    if model not in extractors:
-        raise NotImplementedError(f'Not implemented extractor: {model}')
-    
-    return extractors[model](dataloader, checkpoint_path)
+
+    fallback_extractor = 'simclr_v2'
+
+    try:
+        versions_dict = unmunchify(extractors[using_extractor].versions.toDict())
+    except KeyError:
+        versions_dict = unmunchify(extractors[fallback_extractor].versions.toDict())
+
+    try:
+        return ext_factory[using_extractor](dataloader, checkpoint_path, versions_dict)
+    except NotImplementedError as e:
+        print(f"Error: {e} - Using default fallback extractor - {using_extractor} not implemented.")
+        return ext_factory[fallback_extractor](dataloader, checkpoint_path, versions_dict)
+
+
 
 
 def load_config(config_path) -> Munch:
@@ -63,12 +74,10 @@ def main():
     config = load_config(args.config_path)
 
 
-    extractor = build_extractor(config.checkpoint_path, config.extractor)
+    extractor = build_extractor(config.checkpoint_path, config.extractors, config.using_extractor)
     #extractor.print_summary()
     
     input_batch = get_sample_batch(3)
-
-    extractor.load_weights()
 
     #features = extractor.compute_features(input_batch)
 

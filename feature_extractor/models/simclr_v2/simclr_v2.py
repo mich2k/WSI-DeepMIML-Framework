@@ -2,31 +2,21 @@
 from feature_extractor.extractor.extractor import FeatureExtractor, Version    
 from .resnet import get_resnet, name_to_params
 import torch
-from utils import get_device
 from torch.nn import Identity
 
 
 class SimCLRv2(FeatureExtractor):
 
-    def __init__(self, dataloader, checkpoint_path, version_id="r50_1x_sk0"):
-        super().__init__(dataloader, checkpoint_path)
-        self.device = get_device()
-        
-
-        self.set_versions(
-            [Version('r50_1x_sk0', 100), Version('r101_1x_sk0', 100), Version('r152_3x_sk1', 100)]
-        )
-
-        self.is_version_id_supported(version_id)
-                   
-        self.version = self.get_version_by_id(version_id)
-
+    def __init__(self, dataloader, checkpoint_path, versions, out_dimensionality=100, version_id="r50_1x_sk0"):
+        super().__init__(dataloader, checkpoint_path, versions, version_id, out_dimensionality)
+                           
         self.model, _ = get_resnet(*name_to_params(self.version.get_version_id()))
+        self._load_weights(self.version)
 
 
 
-    def load_weights(self):
-        self.model.load_state_dict(torch.load(self.checkpoint_path + self.version.get_version_id() + '.pth')['resnet'])
+    def _load_weights(self, current_version:Version):
+        self.model.load_state_dict(torch.load(self.checkpoint_path + current_version.get_version_id() + '.pth')['resnet'])
         self.model = self.model.to(self.device).eval()
     
     def compute_features(self, x:torch.Tensor, eval=False):
@@ -37,4 +27,4 @@ class SimCLRv2(FeatureExtractor):
 
     def bypass_backbone_fc(self):
         super().bypass_backbone_fc()
-        #self.model.fc = Identity()
+        self.model.fc = Identity()

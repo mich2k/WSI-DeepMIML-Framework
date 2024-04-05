@@ -22,10 +22,6 @@ class Version():
         self.version_id = version_id
         self.backbone_dimensionality = backbone_dimensionality
         self.parent_type = parent_type
-        self.undefined_version = False
-
-        if backbone_dimensionality == 0 or version_id == "default" or parent_type == "default":
-           self.undefined_version = True
     
     def get_dimensionality(self):
         return self.backbone_dimensionality
@@ -37,33 +33,45 @@ class Version():
 
 class FeatureExtractor():
 
-    def __init__(self, dataloader, checkpoint_path, out_fc_dimensionality=-1):
+    def __init__(self, dataloader, checkpoint_path, versions_dict:dict, version_id, out_fc_dimensionality):
         self.model = None
-        self.version:Version = Version("default", 0, "default")
+        self.device = get_device()
+
         self.checkpoint_path = checkpoint_path
 
         self.versions:Version = []
-        self.device = get_device()
         self.dataloader = dataloader
         self.has_custom_fc = False
 
         # we might have aggregators which dont need an extra FC layer, hence we can leave the out_fc_dimensionality to -1 (<0)
         # usually this is needed when we bypass the backbone fc by backbone.fc = nn.Identity() and we want to exit with a custom dimensionality
 
-        if not out_fc_dimensionality < 0:
-            self.fc = FCLayer(self.version.backbone_dimensionality, out_fc_dimensionality)
-            self.has_custom_fc = True
-        else:
-            self.bypass_backbone_fc()
+        self._build_versions(versions_dict)
+
+        self._is_version_id_supported(version_id)
+
+        self.version:Version = self._get_version_by_id(version_id)
+            
+        self.fc = FCLayer(self.version.backbone_dimensionality, out_fc_dimensionality)
+
+        # if not out_fc_dimensionality < 0:
+        #     self.has_custom_fc = True
+        # else:
+        #     self.bypass_backbone_fc()
                   
     def print_summary(self):
         print(self.model)
         
            
     @abstractmethod
-    def load_weights(self, apply_mlp=False):
+    def _load_weights(self, current_version:Version):
         pass
     
+
+    @abstractmethod
+    def _build_versions(self):
+        pass
+
     @abstractmethod
     def compute_features(self, x:torch.Tensor, eval):
         pass
@@ -71,12 +79,14 @@ class FeatureExtractor():
     @abstractmethod
     def bypass_backbone_fc(self):
         pass
+
     
-    def set_versions(self, versions:Version):
-        self.versions = versions
+    def _build_versions(self, versions:dict):
+        for k,v in versions.items():
+            self.versions.append(Version(k, v))
         self._set_parent_in_versions()
     
-    def is_version_id_supported(self, version_id:str):
+    def _is_version_id_supported(self, version_id:str):
         flag = False
         for version in self.versions:
             if version_id == version.get_version_id():
@@ -85,7 +95,7 @@ class FeatureExtractor():
             raise NotImplementedError(f'Invalid version: {version_id} for {self.__class__.__name__} extractor')
 
 
-    def get_version_by_id(self, version_id:str) -> Version:
+    def _get_version_by_id(self, version_id:str) -> Version:
         for version in self.versions:
             if version_id == version.get_version_id():
                 return version

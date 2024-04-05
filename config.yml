@@ -1,2 +1,10 @@
 checkpoint_path: "checkpoints/"
-extractor: "dino"            #  Which feature extractor [simclrv2]
+
+using_extractor: "simclr_v2"
+
+extractors:
+  simclr_v2:        #  Which feature extractor [simclr_v2] 
+      versions:
+        r50_1x_sk0: 100
+        r101_1x_sk0: 100
+
