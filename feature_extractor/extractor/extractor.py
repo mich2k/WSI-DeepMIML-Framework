@@ -85,6 +85,12 @@ class FeatureExtractor():
             raise NotImplementedError(f'Invalid version: {version_id} for {self.__class__.__name__} extractor')
 
 
+    def get_version_by_id(self, version_id:str) -> Version:
+        for version in self.versions:
+            if version_id == version.get_version_id():
+                return version
+        raise NotImplementedError(f'Invalid version: {version_id} for {self.__class__.__name__}')
+
     def _set_parent_in_versions(self):
         for version in self.versions:
             version.parent_type = self.__class__.__name__

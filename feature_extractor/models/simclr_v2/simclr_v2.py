@@ -19,7 +19,7 @@ class SimCLRv2(FeatureExtractor):
 
         self.is_version_id_supported(version_id)
                    
-        self.version = Version(version_id, 100)
+        self.version = self.get_version_by_id(version_id)
 
         self.model, _ = get_resnet(*name_to_params(self.version.get_version_id()))
 
