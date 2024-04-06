@@ -29,11 +29,12 @@ class DINO(FeatureExtractor):
             self.model = torchvision_models.__dict__[self.version_id]()
             self.embed_dim = self.model.fc.weight.shape[1]
             self.model.fc = nn.Identity()
-
         else:
             print(f"Unknow architecture: {self.version_id}")
             sys.exit(1)
-            
+        
+        
+        self.model = self.model.to(self.device)
         self.linear_classifier = LinearClassifier(self.embed_dim, num_labels=num_labels)
         self.linear_classifier = self.linear_classifier.to(self.device)
         
@@ -47,6 +48,7 @@ class DINO(FeatureExtractor):
         print(f"Model {self.version_id} built.")
     
     def compute_features(self, x:torch.Tensor, eval=False):
+
         with torch.no_grad():
             if "vit" in self.version_id:
                 intermediate_output = self.model.get_intermediate_layers(x, self.n_last_blocks)

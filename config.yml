@@ -1,6 +1,7 @@
 checkpoint_path: "checkpoints/"
 
 using_extractor: "dino"
+using_aggregator: "dsmil"
 using_version: "vit_base"
 
 extractors:
