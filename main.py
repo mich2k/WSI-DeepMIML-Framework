@@ -5,7 +5,7 @@ from utils import ImageNetValidationDatasetLoader, get_device
 from feature_extractor.models.simclr_v2.simclr_v2 import SimCLRv2
 from feature_extractor.models.dino.dino import DINO
 import yaml
-from munch import Munch, munchify, unmunchify
+from munch import Munch, unmunchify
 
 
 def get_sample_batch(n, channels=3):
