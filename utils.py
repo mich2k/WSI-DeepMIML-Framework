@@ -5,7 +5,8 @@ import torch.backends.mps as mps
 import torch.cuda as cuda
 from torch.utils.data import Dataset
 import torchvision.transforms as transforms
-
+from munch import Munch, munchify
+import yaml
 
 class ImageNetValidationDatasetLoader(Dataset):
     def __init__(self, val_path):
@@ -29,6 +30,16 @@ def get_device():
     if mps.is_available():
         return 'mps'
     return 'cuda' if cuda.is_available() else 'cpu'
+
+
+def load_config(config_path) -> Munch:
+    try:
+        with open(config_path, 'r') as configuration_fstream:
+            yaml_dict = yaml.safe_load(configuration_fstream)
+            return munchify(yaml_dict)
+    except FileNotFoundError:
+        print("Error with config file")
+        raise FileNotFoundError
 
 
 def count_similar(arr1, arr2, offset=1):

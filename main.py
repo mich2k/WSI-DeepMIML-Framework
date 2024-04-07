@@ -39,15 +39,6 @@ def build_extractor(checkpoint_path, extractors, using_extractor='simclr_v2', da
 
 
 
-
-def load_config(config_path) -> Munch:
-    try:
-        with open('config.yml', 'r') as configuration_fstream:
-            yaml_dict = yaml.safe_load(configuration_fstream)
-            return munchify(yaml_dict)
-    except FileNotFoundError:
-        print("Error with config file")
-        raise FileNotFoundError
             
 
 def main():
