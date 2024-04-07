@@ -1,14 +1,12 @@
 import os, glob
 import argparse
 import torch
-from utils import ImageNetValidationDatasetLoader, get_device
+from utils import ImageNetValidationDatasetLoader, get_device, load_config
 from feature_extractor.models.simclr_v2.simclr_v2 import SimCLRv2
 from feature_extractor.models.dino.dino import DINO
 from aggregators.models.dsmil.dsmil import DSMIL
 import yaml
 from munch import Munch, unmunchify
-from munch import Munch, munchify
-
 
 def get_sample_batch(n, channels=3):
     inputs = []
