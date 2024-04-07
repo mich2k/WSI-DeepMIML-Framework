@@ -4,8 +4,10 @@ import torch
 from utils import ImageNetValidationDatasetLoader, get_device
 from feature_extractor.models.simclr_v2.simclr_v2 import SimCLRv2
 from feature_extractor.models.dino.dino import DINO
+from aggregators.models.dsmil.dsmil import DSMIL
 import yaml
 from munch import Munch, unmunchify
+from munch import Munch, munchify
 
 
 def get_sample_batch(n, channels=3):
@@ -27,9 +29,9 @@ def build_extractor(checkpoint_path, extractors, using_extractor='simclr_v2', da
     fallback_extractor = 'simclr_v2'
 
     try:
-        versions_dict = unmunchify(extractors[using_extractor].versions.toDict())
+        versions_dict = extractors[using_extractor].versions
     except KeyError:
-        versions_dict = unmunchify(extractors[fallback_extractor].versions.toDict())
+        versions_dict = extractors[fallback_extractor].versions
 
     try:
         return ext_factory[using_extractor](dataloader, checkpoint_path, versions_dict)
@@ -37,8 +39,13 @@ def build_extractor(checkpoint_path, extractors, using_extractor='simclr_v2', da
         print(f"Error: {e} - Using default fallback extractor - {using_extractor} not implemented.")
         return ext_factory[fallback_extractor](dataloader, checkpoint_path, versions_dict)
 
-
-
+def build_aggregator(aggregator_name, feature_extractor, input_size, output_size):
+    
+    aggregator_factory = {
+        'dsmil': DSMIL
+    }
+    
+    return aggregator_factory[aggregator_name](feature_extractor, input_size, output_size)
             
 
 def main():
@@ -69,15 +76,17 @@ def main():
     #extractor.print_summary()
     
     input_batch = get_sample_batch(3)
-
-    #features = extractor.compute_features(input_batch)
-
-    extractor.benchmark('datasets/ILSVRC2012_img_val/', 5, 32)
+    
+    #extractor.benchmark('datasets/ILSVRC2012_img_val/', 5, 32)
 
     # dovremo creare 2 opzioni: preloaded features e to-compute features, per ora assumiamo vadano fatte comunque passare per l'estrattore
         # successivamente reperiremo i benchmark dataset con le features pre-calcolate
     
+    #features = extractor.compute_features(input_batch)
     
+    aggregator = build_aggregator(config.using_aggregator, extractor, extractor.version.get_dimensionality(), 1)
+    
+    aggregator(input_batch)
 
 if(__name__ == '__main__'):
     main()
