@@ -38,13 +38,13 @@ def build_extractor(checkpoint_path, extractors, version_id, using_extractor='si
         print(f"Error: {e} - Using default fallback extractor - {using_extractor} not implemented.")
         return ext_factory[fallback_extractor](dataloader, checkpoint_path, versions_dict)
 
-def build_aggregator(aggregator_name, input_size, output_size):
+def build_aggregator(aggregator_name, input_size, output_size, custom_weights=False):
     
     aggregator_factory = {
         'dsmil': DSMIL
     }
     
-    return aggregator_factory[aggregator_name](input_size, output_size)
+    return aggregator_factory[aggregator_name](input_size, output_size, custom_weights=custom_weights)
             
 
 def main():
@@ -74,7 +74,7 @@ def main():
     #extractor.benchmark('datasets/ILSVRC2012_img_val/', 5, 32)
     #input_batch = get_sample_batch(3)
     
-    aggregator = build_aggregator(config.using_aggregator, extractor.embed_dim, 1000)
+    aggregator = build_aggregator(config.using_aggregator, extractor.embed_dim, 1000, custom_weights=True)
     milnet = MILNet(aggregator, extractor)
     
 
