@@ -1,8 +1,9 @@
+data_path: "datasets/ILSVRC2012_img_val/"
 checkpoint_path: "checkpoints/"
 
 using_extractor: "dino"
+using_version: "vit_small"
 using_aggregator: "dsmil"
-using_version: "vit_base"
 
 extractors:
   simclr_v2:        #  Which feature extractor [simclr_v2] 

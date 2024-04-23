@@ -16,15 +16,18 @@ class BagClassifier(nn.Module):
             nn.ReLU()
         ).to(device)
         
-        self.fcc = nn.Conv1d(output_class, output_class, kernel_size=input_size).to(device)
+        # 128 to be changed with output class
+        self.fcc = nn.Conv1d(output_class, 128, kernel_size=input_size).to(device)
         
+    # c.shape 128,1000 q_max.shape 1000,128    
+
     def forward(self, feats, class_scores):
         Q = self.q(feats)
         V = self.v(feats)
         
         # Select the critical instances: maximum feature values
-        _, m_indices = torch.max(class_scores, dim=0) 
-        critical_instances = torch.index_select(feats, dim=0, index=m_indices)
+        _, m_indices = torch.sort(class_scores, 0, descending=True)
+        critical_instances = torch.index_select(feats, dim=0, index=m_indices[0, :])
         
         # Compute the query of critical instances
         q_ci = self.q(critical_instances)
@@ -42,24 +45,18 @@ class BagClassifier(nn.Module):
         B = torch.mm(A.transpose(0, 1), V)
 
         # Compute the bag representation
-        C = self.fcc(B)
+        C = self.fcc(B) # output_shape x 1
+        #C = C.view(1, -1)
         
-        return A, B, C
+        return C
         
         
  
 
 class DSMIL(Aggregator):
-    def __init__(self, feature_extractor, input_size, output_size) -> None:
-        super(DSMIL, self).__init__(feature_extractor)
-        self.instance_classifier = feature_extractor
+    def __init__(self, input_size, output_size) -> None:
+        super(DSMIL, self).__init__()
         self.bag_classifier = BagClassifier(input_size, output_size, self.device)
         
-    def forward_mil(self, x):
-        feats = self.instance_classifier.compute_features(x)
-        class_scores = self.instance_classifier.linear_classifier(feats)
-        bag_classification = self.bag_classifier(feats, class_scores)
-        return bag_classification    
-    
-    def forward(self, x):
-        return self.forward_mil(x)
+    def forward(self, feats, class_scores):
+        return self.bag_classifier(feats, class_scores)

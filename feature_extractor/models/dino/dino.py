@@ -21,7 +21,7 @@ class DINO(FeatureExtractor):
         self.model = None        
         
         if self.version_id in vits.__dict__.keys():
-                self.model = vits.__dict__[self.architecure](patch_size=patch_size, num_classes=0)
+                self.model = vits.__dict__[self.version_id](patch_size=patch_size, num_classes=0)
                 self.embed_dim = self.model.embed_dim * (n_last_blocks + int(avgpool_patchtokens))
             
         # otherwise, we check if the version_id is in torchvision models
@@ -38,13 +38,19 @@ class DINO(FeatureExtractor):
         self.linear_classifier = LinearClassifier(self.embed_dim, num_labels=num_labels)
         self.linear_classifier = self.linear_classifier.to(self.device)
         
-        self._load_weights(apply_fc=True)
+        self._load_weights(apply_fc=True, custom_weights=True)
         
     
-    def _load_weights(self, apply_fc, pretrained_weights='resnet50', checkpoint_key='teacher'):
-        utility.load_pretrained_weights(self.model, pretrained_weights, checkpoint_key, self.version_id, self.patch_size)
+    def _load_weights(self, apply_fc, pretrained_weights='resnet50', checkpoint_key='teacher', custom_weights=False, dataset_name="lung", scale_level=20):
+        if custom_weights:
+            utility.load_custom_weights(self.model, self.linear_classifier, checkpoint_key, dataset_name, scale_level)   
+        
+        else:
+            utility.load_pretrained_weights(self.model, pretrained_weights, checkpoint_key, self.version_id, self.patch_size)
+            
         if apply_fc:
             utility.load_pretrained_linear_weights(self.linear_classifier, self.version_id, self.patch_size)
+        
         print(f"Model {self.version_id} built.")
     
     def compute_features(self, x:torch.Tensor, eval=False):

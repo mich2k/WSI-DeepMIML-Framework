@@ -1,12 +1,11 @@
-import os, glob
 import argparse
 import torch
-from utils import ImageNetValidationDatasetLoader, get_device, load_config
+from utils import get_device, load_config
 from feature_extractor.models.simclr_v2.simclr_v2 import SimCLRv2
 from feature_extractor.models.dino.dino import DINO
 from aggregators.models.dsmil.dsmil import DSMIL
-import yaml
-from munch import Munch, unmunchify
+from mil import MILNet
+from train_mil import train
 
 def get_sample_batch(n, channels=3):
     inputs = []
@@ -17,7 +16,7 @@ def get_sample_batch(n, channels=3):
 def convalidate_args(args):
     return True
 
-def build_extractor(checkpoint_path, extractors, using_extractor='simclr_v2', dataloader=None):
+def build_extractor(checkpoint_path, extractors, version_id, using_extractor='simclr_v2', dataloader=None):
     
     ext_factory = {
         'simclr_v2': SimCLRv2,
@@ -32,18 +31,20 @@ def build_extractor(checkpoint_path, extractors, using_extractor='simclr_v2', da
         versions_dict = extractors[fallback_extractor].versions
 
     try:
+        if using_extractor == 'dino':
+            return ext_factory[using_extractor](dataloader, checkpoint_path, versions_dict, version_id)
         return ext_factory[using_extractor](dataloader, checkpoint_path, versions_dict)
     except NotImplementedError as e:
         print(f"Error: {e} - Using default fallback extractor - {using_extractor} not implemented.")
         return ext_factory[fallback_extractor](dataloader, checkpoint_path, versions_dict)
 
-def build_aggregator(aggregator_name, feature_extractor, input_size, output_size):
+def build_aggregator(aggregator_name, input_size, output_size):
     
     aggregator_factory = {
         'dsmil': DSMIL
     }
     
-    return aggregator_factory[aggregator_name](feature_extractor, input_size, output_size)
+    return aggregator_factory[aggregator_name](input_size, output_size)
             
 
 def main():
@@ -68,23 +69,17 @@ def main():
 
     
     config = load_config(args.config_path)
-
-
-    extractor = build_extractor(config.checkpoint_path, config.extractors, config.using_extractor)
+    extractor = build_extractor(config.checkpoint_path, config.extractors, config.using_version, config.using_extractor)
     #extractor.print_summary()
-    
-    input_batch = get_sample_batch(3)
-    
     #extractor.benchmark('datasets/ILSVRC2012_img_val/', 5, 32)
+    #input_batch = get_sample_batch(3)
+    
+    aggregator = build_aggregator(config.using_aggregator, extractor.embed_dim, 1000)
+    milnet = MILNet(aggregator, extractor)
+    
 
-    # dovremo creare 2 opzioni: preloaded features e to-compute features, per ora assumiamo vadano fatte comunque passare per l'estrattore
-        # successivamente reperiremo i benchmark dataset con le features pre-calcolate
+    train(milnet, config.data_path, args.num_epoch, args.lr, args.weight_decay, args.batch_size_per_gpu, args.num_workers, args.cv_fold)
     
-    #features = extractor.compute_features(input_batch)
-    
-    aggregator = build_aggregator(config.using_aggregator, extractor, extractor.version.get_dimensionality(), 1)
-    
-    aggregator(input_batch)
 
 if(__name__ == '__main__'):
     main()
