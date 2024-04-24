@@ -38,7 +38,7 @@ class DINO(FeatureExtractor):
         self.linear_classifier = LinearClassifier(self.embed_dim, num_labels=num_labels)
         self.linear_classifier = self.linear_classifier.to(self.device)
         
-        self._load_weights(apply_fc=True, custom_weights)
+        self._load_weights(custom_weights, apply_fc=True)
         
     
     def _load_weights(self, apply_fc, pretrained_weights='resnet50', checkpoint_key='teacher', custom_weights=False, dataset_name="lung", scale_level=20):
