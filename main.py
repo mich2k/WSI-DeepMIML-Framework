@@ -16,7 +16,7 @@ def get_sample_batch(n, channels=3):
 def convalidate_args(args):
     return True
 
-def build_extractor(checkpoint_path, extractors, version_id, using_extractor='simclr_v2', dataloader=None):
+def build_extractor(checkpoint_path, extractors, version_id, using_extractor='simclr_v2', dataloader=None, custom_weights=False):
     
     ext_factory = {
         'simclr_v2': SimCLRv2,
@@ -32,19 +32,19 @@ def build_extractor(checkpoint_path, extractors, version_id, using_extractor='si
 
     try:
         if using_extractor == 'dino':
-            return ext_factory[using_extractor](dataloader, checkpoint_path, versions_dict, version_id)
+            return ext_factory[using_extractor](dataloader, checkpoint_path, versions_dict, version_id, custom_weights=custom_weights)
         return ext_factory[using_extractor](dataloader, checkpoint_path, versions_dict)
     except NotImplementedError as e:
         print(f"Error: {e} - Using default fallback extractor - {using_extractor} not implemented.")
         return ext_factory[fallback_extractor](dataloader, checkpoint_path, versions_dict)
 
-def build_aggregator(aggregator_name, input_size, output_size, custom_weights=False):
+def build_aggregator(aggregator_name, input_size, output_size):
     
     aggregator_factory = {
         'dsmil': DSMIL
     }
     
-    return aggregator_factory[aggregator_name](input_size, output_size, custom_weights=custom_weights)
+    return aggregator_factory[aggregator_name](input_size, output_size)
             
 
 def main():
@@ -69,12 +69,12 @@ def main():
 
     
     config = load_config(args.config_path)
-    extractor = build_extractor(config.checkpoint_path, config.extractors, config.using_version, config.using_extractor)
+    extractor = build_extractor(config.checkpoint_path, config.extractors, config.using_version, config.using_extractor, custom_weights=True)
     #extractor.print_summary()
     #extractor.benchmark('datasets/ILSVRC2012_img_val/', 5, 32)
     #input_batch = get_sample_batch(3)
     
-    aggregator = build_aggregator(config.using_aggregator, extractor.embed_dim, 1000, custom_weights=True)
+    aggregator = build_aggregator(config.using_aggregator, extractor.embed_dim, 1000)
     milnet = MILNet(aggregator, extractor)
     
 
