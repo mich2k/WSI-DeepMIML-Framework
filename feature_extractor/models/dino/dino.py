@@ -9,7 +9,7 @@ from feature_extractor.models.dino import vision_transformer as vits
 
 class DINO(FeatureExtractor):
     # architectures: vit or resnet50
-    def __init__(self, dataloader, checkpoint_path, versions, version_id="resnet50", out_dimensionality=100, patch_size=16, avgpool_patchtokens=False, n_last_blocks=4, num_labels=1000):
+    def __init__(self, dataloader, checkpoint_path, versions, version_id="resnet50", out_dimensionality=100, patch_size=16, avgpool_patchtokens=False, n_last_blocks=4, num_labels=1000, custom_weights=False):
         super().__init__(dataloader, checkpoint_path, versions, version_id, out_dimensionality)
         
         self.version_id = version_id
@@ -38,7 +38,7 @@ class DINO(FeatureExtractor):
         self.linear_classifier = LinearClassifier(self.embed_dim, num_labels=num_labels)
         self.linear_classifier = self.linear_classifier.to(self.device)
         
-        self._load_weights(apply_fc=True, custom_weights=True)
+        self._load_weights(custom_weights, apply_fc=True)
         
     
     def _load_weights(self, apply_fc, pretrained_weights='resnet50', checkpoint_key='teacher', custom_weights=False, dataset_name="lung", scale_level=20):
