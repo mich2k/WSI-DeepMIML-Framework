@@ -45,6 +45,7 @@ def build_aggregator(aggregator_name, input_size, output_size):
     }
     
     return aggregator_factory[aggregator_name](input_size, output_size)
+    return aggregator_factory[aggregator_name](input_size, output_size)
             
 
 def main():
@@ -70,15 +71,17 @@ def main():
     
     config = load_config(args.config_path)
     extractor = build_extractor(config.checkpoint_path, config.extractors, config.using_version, config.using_extractor, custom_weights=True)
-    #extractor.print_summary()
-    #extractor.benchmark('datasets/ILSVRC2012_img_val/', 5, 32)
-    #input_batch = get_sample_batch(3)
+    # extractor.print_summary()
+    # extractor.benchmark('datasets/ILSVRC2012_img_val/', 5, 32)
+    # input_batch = get_sample_batch(3)
+    # x = extractor.compute_features(input_batch)
     
-    aggregator = build_aggregator(config.using_aggregator, extractor.embed_dim, 1000)
+    
+    aggregator = build_aggregator(config.using_aggregator, extractor.embed_dim, 3)
     milnet = MILNet(aggregator, extractor)
     
 
-    train(milnet, config.data_path, args.num_epoch, args.lr, args.weight_decay, args.batch_size_per_gpu, args.num_workers, args.cv_fold)
+    # train(milnet, config.data_path, args.num_epoch, args.lr, args.weight_decay, args.batch_size_per_gpu, args.num_workers, args.cv_fold)
     
 
 if(__name__ == '__main__'):

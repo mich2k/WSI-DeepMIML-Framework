@@ -1,14 +1,15 @@
-data_path: "datasets/ILSVRC2012_img_val/"
+data_path: "datasets/diffinfinite_patches_v0_o6-4.5"
+#data_path: "datasets/ILSVRC2012_img_val/"
 checkpoint_path: "checkpoints/"
 
-using_extractor: "dino"
+using_extractor: "simclr_v2" #  Which feature extractor [simclr_v2, dino] 
 using_version: "vit_small"
 using_aggregator: "dsmil"
 
 extractors:
-  simclr_v2:        #  Which feature extractor [simclr_v2] 
+  simclr_v2:
       versions:
-        r50_1x_sk0: 
+        r50_1x_sk0:
           dimensionality: 100
         r101_1x_sk0: 
           dimensionality: 100
