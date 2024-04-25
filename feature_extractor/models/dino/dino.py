@@ -38,12 +38,12 @@ class DINO(FeatureExtractor):
         self.linear_classifier = LinearClassifier(self.embed_dim, num_labels=num_labels)
         self.linear_classifier = self.linear_classifier.to(self.device)
         
-        self._load_weights(apply_fc=True, custom_weights=custom_weights)
+        self._load_weights(checkpoint_path, apply_fc=True, custom_weights=custom_weights)
         
     
-    def _load_weights(self, apply_fc, pretrained_weights='resnet50', checkpoint_key='teacher', custom_weights=False, dataset_name="lung", scale_level=20):
+    def _load_weights(self, checkpoint_path, apply_fc, pretrained_weights='resnet50', checkpoint_key='teacher', custom_weights=False, dataset_name="lung", scale_level=20):
         if custom_weights:
-            utility.load_custom_weights(self.model, self.linear_classifier, checkpoint_key, dataset_name, scale_level)   
+            utility.load_custom_weights(self.model, checkpoint_path, checkpoint_key, dataset_name, scale_level)   
         
         else:
             utility.load_pretrained_weights(self.model, pretrained_weights, checkpoint_key, self.version_id, self.patch_size)

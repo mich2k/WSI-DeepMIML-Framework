@@ -62,7 +62,7 @@ def load_pretrained_linear_weights(linear_classifier, model_name, patch_size):
     else:
         print("We use random linear weights.")
         
-def load_custom_weights(model, linear_classifier, checkpoint_key, dataset_name, scale_level):
+def load_custom_weights(model, checkpoint_path, checkpoint_key, dataset_name, scale_level):
     
     if dataset_name == "camelyon16" and scale_level == 5: 
         url = "https://ailb-web.ing.unimore.it/publicfiles/miccai_dasmil_checkpoints/dasmil/camelyon16/dino/x5/checkpoint.pth.gz"
@@ -79,7 +79,8 @@ def load_custom_weights(model, linear_classifier, checkpoint_key, dataset_name, 
         url = "https://ailb-web.ing.unimore.it/publicfiles/miccai_dasmil_checkpoints/dasmil/lung/dino/x20/checkpoint.pth.gz"
     
     weights = f"dino_weights_{dataset_name}_{scale_level}"
-    output_path = "checkpoints/" + weights + ".pth"
+    
+    output_path = checkpoint_path + weights + ".pth"
     print(f"Load {weights}")
     
     if not os.path.exists(output_path):
@@ -87,7 +88,7 @@ def load_custom_weights(model, linear_classifier, checkpoint_key, dataset_name, 
         extract_data(weights + ".gz", output_path)
         os.remove(weights + '.gz')
     
-    state_dict = torch.load("checkpoints/"+ weights + ".pth")[checkpoint_key]
+    state_dict = torch.load(checkpoint_path + weights + ".pth")[checkpoint_key]
     state_dict = {k.replace("backbone.", ""): v for k, v in state_dict.items()}
     state_dict = {k.replace("head.", ""): v for k, v in state_dict.items()}
     

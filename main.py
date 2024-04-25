@@ -56,7 +56,7 @@ def main():
     parser.add_argument('--weight_decay', default=5e-3, type=float, help='Weight decay [5e-3]')
     parser.add_argument('--model', default='dsmil', type=str, help='Which MIL model [dsmil]')
     parser.add_argument('--num_workers', default=10, type=int, help='Number of data loading workers per GPU.')
-    parser.add_argument('--batch_size_per_gpu', default=128, type=int, help='Per-GPU batch-size')
+    parser.add_argument('--batch_size_per_gpu', default=32, type=int, help='Per-GPU batch-size')
     parser.add_argument("--dist_url", default="env://", type=str, help="""url used to set up
         distributed training; see https://pytorch.org/docs/stable/distributed.html""")
     parser.add_argument('--config_path', default='config.yml', type=str, help='deepmiml-fw config filepath')
@@ -76,7 +76,7 @@ def main():
     x = extractor.compute_features(input_batch)
     
     
-    aggregator = build_aggregator(config.using_aggregator, extractor.embed_dim, 3)
+    aggregator = build_aggregator(config.using_aggregator, extractor.embed_dim, 1000)
     milnet = MILNet(aggregator, extractor)
     
 

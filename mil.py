@@ -1,3 +1,4 @@
+import torch
 from torch import nn
 from aggregators.models.aggregator.aggregator import Aggregator
 from feature_extractor.extractor.extractor import FeatureExtractor
@@ -9,8 +10,10 @@ class MILNet(nn.Module):
         self.extractor = extractor
         
     def forward(self, x):
-        feats = self.extractor.compute_features(x)
-        class_scores = self.extractor.linear_classifier(feats)
+        with torch.no_grad():
+            feats = self.extractor.compute_features(x)
+            class_scores = self.extractor.linear_classifier(feats)
+        
         bag_prediction = self.aggregator(feats, class_scores)
         return class_scores, bag_prediction
         
