@@ -1,8 +1,11 @@
 from abc import abstractmethod
-from torch import nn
 from utils import get_device
 
-class Aggregator(nn.Module):
-    def __init__(self) -> None:
-        super(Aggregator, self).__init__()
+class Aggregator():
+    def __init__(self, is_pytorch_model=True):
         self.device = get_device()
+        self.is_pytorch_model = is_pytorch_model
+    
+    @abstractmethod
+    def miml_forward(self):
+        pass

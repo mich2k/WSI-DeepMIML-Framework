@@ -1,10 +1,10 @@
-data_path: "datasets/diffinfinite_patches_v0_o6-4.5"
-#data_path: "datasets/ILSVRC2012_img_val/"
+#data_path: "datasets/diffinfinite_patches_v0_o6-4.5/"
+data_path: "datasets/ILSVRC2012_img_val/"
 checkpoint_path: "checkpoints/"
 
-using_extractor: "dino" #  Which feature extractor [simclr_v2, dino] 
+using_extractor: "dino" #  Which feature extractor [simclr_v2, dino, plip, None] 
 using_version: "vit_small" # If dino [vit_small, vit_base]
-using_aggregator: "dsmil"
+using_aggregator: "cknn"
 
 extractors:
   simclr_v2:
@@ -23,3 +23,4 @@ extractors:
           n_last_blocks: 1
         vit_small: 
           dimensionality: 384
+

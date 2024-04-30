@@ -4,9 +4,60 @@ import numpy as np
 import torch.backends.mps as mps
 import torch.cuda as cuda
 from torch.utils.data import Dataset
+import torch
 import torchvision.transforms as transforms
 from munch import Munch, munchify
 import yaml
+import pandas as pd
+import cv2
+from tqdm import tqdm
+
+
+class MultiLabelDataset(Dataset): 
+    def __init__(self):
+        self.labels = []
+        self.images = []
+        labels_path= "datasets/multilabel_modified/labels.csv" 
+        images_path= "datasets/multilabel_modified/images"
+        df = pd.read_csv(labels_path)
+        
+        column_names = df.columns.tolist()
+
+        df.rename(columns={column_names[1]: 'Classes'}, inplace=True)
+        
+        for index, row in df.iterrows():
+            l = list(row.iloc[-10:])
+            self.labels.append(l)
+        self.labels= np.array(self.labels)
+        
+        image_names=df['Image_Name'].tolist()
+           
+        for img_name in tqdm(image_names):
+            image_path = os.path.join(images_path, img_name) 
+            image = Image.open(image_path)
+            image = np.array(image)
+            if len(image.shape) == 2:
+                copied_images = [image.copy() for _ in range(3)] 
+                image = np.stack(copied_images, axis=-1)
+            
+            image = cv2.resize(image, (32,32))
+            self.images.append(image.reshape((3,32,32)))
+            
+        self.images = np.array(self.images)
+            
+        self.normalize()
+        
+    def normalize(self):
+        self.images = self.images/255.0
+        
+    def __len__(self):
+        return self.images.shape[0]
+    
+    def __getitem__(self, index):
+        return self.images[index], self.labels[index]
+    
+    def get_data(self):
+        return self.images, self.labels
 
 class ImageNetValidationDatasetLoader(Dataset):
     def __init__(self, val_path):
@@ -58,3 +109,9 @@ def accuracy(pred, target, topk=(1,)):
     #how_many_had_zero = (target[0].shape[0] - target[0].nonzero().shape[0])
     correct_by_offset = count_similar(pred, target, 1)
     return correct, correct_by_offset
+
+def get_sample_batch(n, channels=3):
+    inputs = []
+    for i in range(n):
+        inputs.append(torch.randn((channels,255,255)))
+    return torch.stack(inputs).to(get_device())
