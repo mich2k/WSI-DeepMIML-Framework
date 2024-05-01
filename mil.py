@@ -24,8 +24,8 @@ class MILNet():
         dataset = MultiLabelDataset(10)
         
         # Get data and labels
-        inputs, labels = dataset.get_data()
+        bag_set, labels = dataset.get_data()
         
         if not self.aggregator.is_pytorch_model:
-            self.aggregator.train(inputs, labels)
+            self.aggregator.train(bag_set, labels)
             return

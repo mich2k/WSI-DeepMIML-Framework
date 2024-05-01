@@ -12,12 +12,12 @@ class BRkNN(Aggregator):
         self._classifier_b = BRkNNbClassifier(k=k)
         self.parameters = {'k': range(1,k)}
         
-    def train(self, inputs, labels):
+    def train(self, bag_set, labels):
         
         # Flattening input data
-        inputs = inputs.reshape(inputs.shape[0], -1)
+        bag_set = bag_set.reshape(bag_set.shape[0], -1)
         
-        X_train, X_test, y_train, y_test = train_test_split(inputs, labels, test_size=0.33)
+        X_train, X_test, y_train, y_test = train_test_split(bag_set, labels, test_size=0.33)
         
         # Train classifier
         print('Training BRkNNaClassifier')

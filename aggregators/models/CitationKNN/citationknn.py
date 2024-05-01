@@ -106,11 +106,11 @@ class CitationKNN(Aggregator):
                     
         return Matrix
     
-    def train(self, inputs, labels, folds=10):
+    def train(self, bag_set, labels, folds=10):
         
         # Convert MIML data in MI
         
-        bags, mi_labels = binary_relevance_transformation(inputs, labels)
+        bags, mi_labels = binary_relevance_transformation(bag_set, labels)
         
         for k in range(2, 11):
             parameters_citationknn = {'references': k, 'citers': k+2}
