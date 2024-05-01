@@ -178,3 +178,4 @@ external/*
 *.json
 .DS_store
 train_miml.py
+test.*

@@ -21,7 +21,7 @@ class MILNet():
     def train_model(self):
         
          # Load dataset
-        dataset = MultiLabelDataset()
+        dataset = MultiLabelDataset(10)
         
         # Get data and labels
         inputs, labels = dataset.get_data()

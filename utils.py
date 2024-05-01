@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 
 class MultiLabelDataset(Dataset): 
-    def __init__(self):
+    def __init__(self, stop_at = 0):
         self.labels = []
         self.images = []
         labels_path= "datasets/multilabel_modified/labels.csv" 
@@ -28,6 +28,10 @@ class MultiLabelDataset(Dataset):
         for index, row in df.iterrows():
             l = list(row.iloc[-10:])
             self.labels.append(l)
+            
+            if len(self.labels) == stop_at and stop_at != 0:
+                break
+            
         self.labels= np.array(self.labels)
         
         image_names=df['Image_Name'].tolist()
@@ -42,6 +46,10 @@ class MultiLabelDataset(Dataset):
             
             image = cv2.resize(image, (32,32))
             self.images.append(image.reshape((3,32,32)))
+            
+            if len(self.images) == stop_at and stop_at != 0:
+                break
+            
             
         self.images = np.array(self.images)
             
@@ -58,6 +66,7 @@ class MultiLabelDataset(Dataset):
     
     def get_data(self):
         return self.images, self.labels
+        
 
 class ImageNetValidationDatasetLoader(Dataset):
     def __init__(self, val_path):
@@ -115,3 +124,18 @@ def get_sample_batch(n, channels=3):
     for i in range(n):
         inputs.append(torch.randn((channels,255,255)))
     return torch.stack(inputs).to(get_device())
+
+def binary_relevance_transformation(images, labels, stop_at=0):
+        
+        # Apply binary relevance transformation
+        bags = []
+        mi_labels = []
+        
+        for i in range(len(labels)):
+            if len(bags) == stop_at and stop_at != 0:
+                    break
+            for j in range(labels.shape[1]):
+                bags.append(images[i].reshape(images[i].shape[0], -1))
+                mi_labels.append([labels[i][j]])
+        
+        return np.array(bags), np.array(mi_labels)
