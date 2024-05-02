@@ -17,7 +17,7 @@ def build_aggregator(aggregator_name, input_size, output_size, use_pytorch=False
         'milr': MILR,
         'miSVM': miSVM,
         'MISVM': MISVM,
-        'mimlknn': MLkNN
+        'mlknn': MLkNN
     }
     
     
