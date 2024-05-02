@@ -125,17 +125,31 @@ def get_sample_batch(n, channels=3):
         inputs.append(torch.randn((channels,255,255)))
     return torch.stack(inputs).to(get_device())
 
-def binary_relevance_transformation(images, labels, stop_at=0):
+def binary_relevance_transformation(images, labels, nested_array=True, get_bags = False, stop_at=0):
         
         # Apply binary relevance transformation
-        bags = []
+        mi_features = []
         mi_labels = []
+        bags = []
         
         for i in range(len(labels)):
-            if len(bags) == stop_at and stop_at != 0:
+            if len(mi_features) == stop_at and stop_at != 0:
                     break
+            bag = []
+            
             for j in range(labels.shape[1]):
-                bags.append(images[i].reshape(images[i].shape[0], -1))
-                mi_labels.append([labels[i][j]])
+                mi_features.append(images[i].reshape(images[i].shape[0], -1))
+                if nested_array:
+                    mi_labels.append([labels[i][j]])
+                else:
+                    mi_labels.append(labels[i][j])
+                    
+                if get_bags:
+                    bag.append(i + j)
+                
+            bags.append(np.array(bag))
         
-        return np.array(bags), np.array(mi_labels)
+        if get_bags:
+            return np.array(mi_features), np.array(mi_labels), bags
+        
+        return np.array(mi_features), np.array(mi_labels)

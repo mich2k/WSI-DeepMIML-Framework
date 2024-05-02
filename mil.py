@@ -21,11 +21,13 @@ class MILNet():
     def train_model(self):
         
          # Load dataset
-        dataset = MultiLabelDataset(10)
+        dataset = MultiLabelDataset(100)
         
         # Get data and labels
         bag_set, labels = dataset.get_data()
         
         if not self.aggregator.is_pytorch_model:
             self.aggregator.train(bag_set, labels)
-            return
+        else:
+            self.aggregator.train(dataset)
+        
