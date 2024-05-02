@@ -3,7 +3,7 @@ from aggregators.models.FastMIML.fastmiml import FastMIML
 from aggregators.models.BRkNN.brknn import BRkNN
 from aggregators.models.CitationKNN.citationknn import CitationKNN
 from aggregators.models.MILR.milr import MILR
-from aggregators.models.MISVM.mi_svm import MISVM
+from aggregators.models.MISVM.mi_svm import MISVM, miSVM
 from aggregators.models.MLkNN.MLkNN import MLkNN
 
 
@@ -15,6 +15,7 @@ def build_aggregator(aggregator_name, input_size, output_size, use_pytorch=False
         'cknn': CitationKNN,
         'fastmiml': FastMIML,
         'milr': MILR,
+        'miSVM': miSVM,
         'MISVM': MISVM,
         'mimlknn': MLkNN
     }

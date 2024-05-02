@@ -4,7 +4,7 @@ checkpoint_path: "checkpoints/"
 
 using_extractor: "dino" #  Which feature extractor [simclr_v2, dino, plip, None] 
 using_version: "vit_small" # If dino [vit_small, vit_base]
-using_aggregator: "milr"
+using_aggregator: "MISVM"
 
 extractors:
   simclr_v2:
