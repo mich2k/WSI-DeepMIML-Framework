@@ -4,7 +4,7 @@ checkpoint_path: "checkpoints/"
 
 using_extractor: "dino" #  Which feature extractor [simclr_v2, dino, plip, None] 
 using_version: "vit_small" # If dino [vit_small, vit_base]
-using_aggregator: "mlknn"
+using_aggregator: "dsmil" # Which miml method to use [brknn, cknn, dsmil, fastmiml, milr, misvm, mlknn]
 
 extractors:
   simclr_v2:
@@ -24,3 +24,18 @@ extractors:
         vit_small: 
           dimensionality: 384
 
+miml_methods:
+  brknn:
+      k: 3
+  cknn:
+  dsmil:
+      lr: 0.0002
+      n_epochs: 40
+      weight_decay: 0.00005
+      num_workers: 10
+      num_classes: 10
+      loss: "focal" #BCE or focal
+  fastmiml:
+  milr:
+  misvm:
+  mlknn:

@@ -7,7 +7,7 @@ from aggregators.models.MISVM.mi_svm import MISVM, miSVM
 from aggregators.models.MLkNN.MLkNN import MLkNN
 
 
-def build_aggregator(aggregator_name, input_size, output_size, use_pytorch=False):
+def build_aggregator(config, extractor):
     
     aggregator_factory = {
         'dsmil': DSMIL,
@@ -21,10 +21,10 @@ def build_aggregator(aggregator_name, input_size, output_size, use_pytorch=False
     }
     
     
-    if aggregator_name not in aggregator_factory:
-        raise NotImplementedError(f"Aggregator {aggregator_name} not implemented")
+    if config.using_aggregator not in aggregator_factory:
+        raise NotImplementedError(f"Aggregator {config.using_aggregator} not implemented")
     
-    if not use_pytorch:
-        return aggregator_factory[aggregator_name]()
+    if config.using_aggregator == 'dsmil':
+        return aggregator_factory[config.using_aggregator](extractor, config.miml_methods[config.using_aggregator])
     
-    return aggregator_factory[aggregator_name](input_size, output_size)
+    return aggregator_factory[config.using_aggregator](config.miml_methods[config.using_aggregator])

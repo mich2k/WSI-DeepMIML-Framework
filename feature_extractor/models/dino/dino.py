@@ -17,6 +17,7 @@ class DINO(FeatureExtractor):
         self.n_last_blocks = n_last_blocks
         self.avgpool_patchtokens = avgpool_patchtokens
         self.dataloader = dataloader
+        self.num_labels = num_labels
         
         self.model = None        
         
