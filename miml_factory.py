@@ -23,6 +23,7 @@ def build_method(config, extractor):
     if config.method not in method_factory:
         raise NotImplementedError(f"Methodology {config.method} not implemented")
     
+    # !!
     if config.method == 'dsmil':
         return method_factory[config.method](extractor, config.miml_methods[config.method])
     if config.method == 'misvm':

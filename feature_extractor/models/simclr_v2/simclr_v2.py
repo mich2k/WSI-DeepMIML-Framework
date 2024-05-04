@@ -23,10 +23,9 @@ class SimCLRv2(FeatureExtractor):
         self.model = self.model.to(self.device).eval()
     
     def compute_features(self, x:torch.Tensor, eval=False):
-        if eval:
-            return self.model(x, apply_fc=True)
-        else:
-            return self.model(x)
+        feats = self.model(x, apply_fc=False)
+        class_scores = self.linear_classifier(feats)
+        return feats, class_scores
 
     def bypass_backbone_fc(self):
         super().bypass_backbone_fc()

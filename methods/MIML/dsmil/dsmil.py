@@ -39,7 +39,10 @@ class DSMIL(nn.Module, Baseline):
                 
         for epoch in range(self.num_epochs):
             for i, (inputs, labels) in enumerate(data_loader):
-                        
+                
+                inputs = inputs.squeeze(0)
+                labels = labels.squeeze(0)
+                
                 inputs = inputs.to(self.device)
                 labels = labels.to(self.device)
                         

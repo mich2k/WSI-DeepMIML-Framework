@@ -1,11 +1,11 @@
-using_extractor: "plip" #  Which feature extractor [simclr_v2, dino, plip, None] 
-method: "MISVM" # Which miml method to use [brknn, cknn, dsmil, fastmiml, milr, misvm, mlknn]
-data_path: "datasets/ILSVRC2012_img_val/"
+using_extractor: "dino" #  Which feature extractor [simclr_v2, dino, plip, None] 
+method: "dsmil" # Which miml method to use [brknn, cknn, dsmil, fastmiml, milr, misvm, mlknn]
+data_path: "datasets/diffinfinite_tr1/"
 checkpoint_path: "checkpoints/"
 
 extractors:  
   simclr_v2:
-      version_id: "r50_1x_sk0"
+      version_id: "r101_1x_sk0"
       num_labels: 1000
       versions:
         r50_1x_sk0:
@@ -51,8 +51,8 @@ miml_methods:
       n_epochs: 40
       weight_decay: 0.00005
       num_workers: 10
-      num_classes: 10
-      loss: "focal" #BCE or focal
+      num_classes: 5
+      loss: "BCE" #BCE or focal
   fastmiml:
   milr:
   MISVM:

@@ -1,8 +1,9 @@
 import argparse
 from extractor_factory import build_extractor
 from miml_factory import build_method
-from utils import load_config
+from utils import load_config, DiffInfiniteDataset
 from mil import MILNet
+
 
 def convalidate_args(args):
 
@@ -25,6 +26,7 @@ def main():
         print('Invalid arguments')
         exit(1)
 
+    
     config = load_config(args.config_path)
     extractor = build_extractor(config, custom_weights=True)
     
@@ -34,7 +36,7 @@ def main():
             
     miml_method = build_method(config, extractor)
     milnet = MILNet(miml_method, extractor)
-    milnet.train_model()
+    milnet.train_model(config.data_path)
     
 if __name__ == '__main__':
     main()

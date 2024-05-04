@@ -1,6 +1,6 @@
 from methods.baseline import Baseline
 from feature_extractor.extractor.extractor import FeatureExtractor
-from utils import MultiLabelDataset, ImageNetValidationDatasetLoader
+from utils import MultiLabelDataset, ImageNetValidationDatasetLoader, DiffInfiniteDataset
 
 class MILNet():
     def __init__(self, method: Baseline, extractor: FeatureExtractor):
@@ -8,9 +8,9 @@ class MILNet():
         self.model = method
         self.extractor = extractor
     
-    def train_model(self):  
+    def train_model(self, data_path: str):  
          # Load dataset
-        dataset = MultiLabelDataset(100)
+        dataset = DiffInfiniteDataset(data_path, stop_at=10)
         
         if not self.model.is_pytorch_model:
             # Get data and labels
