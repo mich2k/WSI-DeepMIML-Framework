@@ -1,12 +1,12 @@
 import numpy as np
 import random
-from aggregators.models.aggregator.aggregator import Aggregator
 from sklearn.model_selection import train_test_split
+from methods.baseline import Baseline
 
-class FastMIML(Aggregator):
+class FastMIML(Baseline):
 
-    def __init__(self, is_pytorch_model=False):
-        super(FastMIML, self).__init__(is_pytorch_model)
+    def __init__(self, config):
+        super(FastMIML, self).__init__(is_pytorch_model=False)
     
     def FastMIML_train(self, train_data, train_targets, W, V, costs, norm_up, step_size0, num_sub, AW, AV, Anum, trounds, lambd, opts):
         average_begin = opts['average_begin']

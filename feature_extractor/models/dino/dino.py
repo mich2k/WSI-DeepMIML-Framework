@@ -9,24 +9,23 @@ from feature_extractor.models.dino import vision_transformer as vits
 
 class DINO(FeatureExtractor):
     # architectures: vit or resnet50
-    def __init__(self, dataloader, checkpoint_path, versions, version_id="resnet50", out_dimensionality=100, patch_size=16, avgpool_patchtokens=False, n_last_blocks=4, num_labels=1000, custom_weights=False):
-        super().__init__(dataloader, checkpoint_path, versions, version_id, out_dimensionality)
+    def __init__(self, data_path, checkpoint_path, versions, config):
+        super().__init__(data_path, checkpoint_path, versions, config.version_id, versions[config.version_id].dimensionality)
         
-        self.version_id = version_id
-        self.patch_size = patch_size
-        self.n_last_blocks = n_last_blocks
-        self.avgpool_patchtokens = avgpool_patchtokens
-        self.dataloader = dataloader
-        self.num_labels = num_labels
-        
+        self.version_id = config.version_id
+        self.patch_size = config.patch_size
+        self.n_last_blocks = versions[self.version_id].n_last_blocks
+        self.avgpool_patchtokens = versions[self.version_id].avgpool_patchtokens
+        self.num_labels = config.num_labels
+        self.custom_weights = config.custom_weights
         self.model = None        
         
         if self.version_id in vits.__dict__.keys():
-                self.model = vits.__dict__[self.version_id](patch_size=patch_size, num_classes=0)
-                self.embed_dim = self.model.embed_dim * (n_last_blocks + int(avgpool_patchtokens))
+                self.model = vits.__dict__[self.version_id](patch_size=self.patch_size, num_classes=0)
+                self.embed_dim = self.model.embed_dim * (self.n_last_blocks + int(self.avgpool_patchtokens))
             
         # otherwise, we check if the version_id is in torchvision models
-        elif version_id in torchvision_models.__dict__.keys():
+        elif self.version_id in torchvision_models.__dict__.keys():
             self.model = torchvision_models.__dict__[self.version_id]()
             self.embed_dim = self.model.fc.weight.shape[1]
             self.model.fc = nn.Identity()
@@ -36,10 +35,10 @@ class DINO(FeatureExtractor):
         
         
         self.model = self.model.to(self.device)
-        self.linear_classifier = LinearClassifier(self.embed_dim, num_labels=num_labels)
+        self.linear_classifier = LinearClassifier(self.embed_dim, num_labels=self.num_labels)
         self.linear_classifier = self.linear_classifier.to(self.device)
         
-        self._load_weights(checkpoint_path, apply_fc=True, custom_weights=custom_weights)
+        self._load_weights(self.checkpoint_path, apply_fc=True, custom_weights=self.custom_weights)
         
     
     def _load_weights(self, checkpoint_path, apply_fc, pretrained_weights='resnet50', checkpoint_key='teacher', custom_weights=False, dataset_name="lung", scale_level=20):
@@ -65,6 +64,7 @@ class DINO(FeatureExtractor):
                     output = output.reshape(output.shape[0], -1)
             else:
                 output = self.model(x)
-            if eval:
-                output = self.linear_classifier(output)
-        return output
+            
+            class_scores = self.linear_classifier(output)
+            
+        return output, class_scores

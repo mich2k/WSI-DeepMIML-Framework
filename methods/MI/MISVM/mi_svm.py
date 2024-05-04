@@ -6,25 +6,25 @@ import numpy as np
 from random import uniform
 from cvxopt import matrix as cvxmat, sparse
 import inspect
-from aggregators.models.MISVM.sil import SIL
-from aggregators.models.MISVM.svm import SVM
-from aggregators.models.MISVM.cccp import CCCP
-from aggregators.models.MISVM.quadprog import IterativeQP, spzeros, speye
-from aggregators.models.MISVM.kernel import by_name as kernel_by_name
-from aggregators.models.MISVM.util import partition, BagSplitter, spdiag, rand_convex, slices
-from aggregators.models.aggregator.aggregator import Aggregator
+from methods.baseline import Baseline
+from methods.MI.MISVM.sil import SIL
+from methods.MI.MISVM.svm import SVM
+from methods.MI.MISVM.cccp import CCCP
+from methods.MI.MISVM.quadprog import IterativeQP, spzeros, speye
+from methods.MI.MISVM.kernel import by_name as kernel_by_name
+from methods.MI.MISVM.util import partition, BagSplitter, spdiag, rand_convex, slices
 from utils import binary_relevance_transformation
 from sklearn.model_selection import train_test_split
 from scipy.sparse import issparse
 import pdb
 
 
-class MISVM(SIL, Aggregator):
+class MISVM(SIL, Baseline):
     """
     The MI-SVM approach of Andrews, Tsochantaridis, & Hofmann (2002)
     """
 
-    def __init__(self, restarts=0, max_iters=50, is_pytorch_model = False, **kwargs):
+    def __init__(self, config, **kwargs):
         """
         @param kernel : the desired kernel function; can be linear, quadratic,
                         polynomial, or rbf [default: linear]
@@ -42,10 +42,10 @@ class MISVM(SIL, Aggregator):
                            the optimization procedure [default: 50]
         """
         super(MISVM, self).__init__(**kwargs)
-
-        self.restarts = restarts
-        self.max_iters = max_iters
-        self.is_pytorch_model = is_pytorch_model
+        Baseline.__init__(self, is_pytorch_model=False)
+        self.restarts = config.restarts
+        self.max_iters = config.max_iters
+        
     
     def fit(self, bags, y):
         """
@@ -193,7 +193,7 @@ class MISVM(SIL, Aggregator):
         print('\n%s Accuracy: %.1f%%' % ("miSVM", 100 * accuracy))
 
 
-class miSVM(SIL, Aggregator):
+class miSVM(SIL, Baseline):
     """
     The mi-SVM approach of Andrews, Tsochantaridis, & Hofmann (2002)
     """

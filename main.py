@@ -1,6 +1,6 @@
 import argparse
 from extractor_factory import build_extractor
-from aggregator_factory import build_aggregator
+from miml_factory import build_method
 from utils import load_config
 from mil import MILNet
 
@@ -32,8 +32,8 @@ def main():
         extractor.print_summary()
         extractor.benchmark('datasets/ILSVRC2012_img_val/', 5, 32)
             
-    aggregator = build_aggregator(config, extractor)
-    milnet = MILNet(aggregator, extractor)
+    miml_method = build_method(config, extractor)
+    milnet = MILNet(miml_method, extractor)
     milnet.train_model()
     
 if __name__ == '__main__':

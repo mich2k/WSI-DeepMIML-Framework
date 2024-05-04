@@ -19,7 +19,7 @@ import time
 CACHE_CUTOFF_T = 10
 CACHE_DIR = '.kernel_cache'
 
-from aggregators.models.MISVM.util import spdiag, slices
+from methods.MI.MISVM.util import spdiag, slices
 
 
 def by_name(full_name, gamma=None, p=None, use_caching=False):

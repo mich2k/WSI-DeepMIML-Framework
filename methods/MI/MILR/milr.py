@@ -2,11 +2,11 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
-from aggregators.models.MILR.utils import invlogit, logsumexp_safe, generalized_mean
 from sklearn.model_selection import KFold
 from sklearn.metrics import classification_report, roc_auc_score
-from aggregators.models.MILR.utils import make_dataset_from_dataframe
-from aggregators.models.aggregator.aggregator import Aggregator
+from methods.baseline import Baseline
+from methods.MI.MILR.utils import invlogit, logsumexp_safe, generalized_mean
+from methods.MI.MILR.utils import make_dataset_from_dataframe
 from sklearn.preprocessing import StandardScaler
 from utils import binary_relevance_transformation
 torch.manual_seed(1)
@@ -15,14 +15,14 @@ PARAMETERIZED_BAG_FUNCTIONS = ("logsumexp", "generalized_mean")
 EPS = 1e-6
 
 
-class MILR(nn.Module, Aggregator):
+class MILR(nn.Module, Baseline):
     """MILR: model for multi-instance logistic regression."""
 
-    def __init__(self, is_pytorch_model=True):
+    def __init__(self, config):
         super(MILR, self).__init__()
+        Baseline.__init__(self, is_pytorch_model=True)
         self.linear = None
         self.bag_fn = None
-        self.is_pytorch_model = is_pytorch_model
 
     def _predict_instance(self, X):
         return invlogit(self.linear(X))

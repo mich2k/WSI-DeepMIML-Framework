@@ -16,13 +16,13 @@ class BagClassifier(nn.Module):
             nn.ReLU()
         ).to(device)
         
-        # 128 to be changed with output class
+        # input_si
         self.fcc = nn.Conv1d(output_class, output_class, kernel_size=input_size).to(device)
     
     
     def forward(self, feats, class_scores):
-        Q = self.q(feats)
-        V = self.v(feats).view(feats.shape[0], -1) 
+        Q = self.q(feats).view(feats.shape[0], -1)
+        V = self.v(feats) 
         
         # Select the critical instances: maximum feature values
         _, m_indices = torch.sort(class_scores, 0, descending=True)

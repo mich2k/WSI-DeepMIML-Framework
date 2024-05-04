@@ -1,32 +1,50 @@
-#data_path: "datasets/diffinfinite_patches_v0_o6-4.5/"
+using_extractor: "plip" #  Which feature extractor [simclr_v2, dino, plip, None] 
+method: "MISVM" # Which miml method to use [brknn, cknn, dsmil, fastmiml, milr, misvm, mlknn]
 data_path: "datasets/ILSVRC2012_img_val/"
 checkpoint_path: "checkpoints/"
 
-using_extractor: "dino" #  Which feature extractor [simclr_v2, dino, plip, None] 
-using_version: "vit_small" # If dino [vit_small, vit_base]
-using_aggregator: "dsmil" # Which miml method to use [brknn, cknn, dsmil, fastmiml, milr, misvm, mlknn]
-
-extractors:
+extractors:  
   simclr_v2:
+      version_id: "r50_1x_sk0"
+      num_labels: 1000
       versions:
         r50_1x_sk0:
           dimensionality: 100
         r101_1x_sk0: 
           dimensionality: 100
+
   dino:
+      version_id: "vit_small" # [resnet50 (test with synthetical dataset), vit_small, vit_base]
+      custom_weights: True # Only for vit_small
+      num_labels: 1000
+      patch_size: 16
+
       versions:
-        resnet50: 
+        resnet50:
           dimensionality: 2048
+          avgpool_patchtokens: False
+          n_last_blocks: 4
+          
         vit_base: 
           dimensionality: 768
           avgpool_patchtokens: True
           n_last_blocks: 1
+
         vit_small: 
           dimensionality: 384
+          avgpool_patchtokens: False
+          n_last_blocks: 4
+  plip:
+      version_id: "vinid/plip"
+      auth_token: None
+      versions:
+        vinid/plip:
+          dimensionality: 384
+  
 
 miml_methods:
   brknn:
-      k: 3
+      k: 5
   cknn:
   dsmil:
       lr: 0.0002
@@ -37,5 +55,9 @@ miml_methods:
       loss: "focal" #BCE or focal
   fastmiml:
   milr:
-  misvm:
+  MISVM:
+    restarts: 0
+    max_iters: 50
+    C: 1
+    kernel: "linear"
   mlknn:

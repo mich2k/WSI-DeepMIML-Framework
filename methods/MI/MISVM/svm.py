@@ -3,9 +3,9 @@ Implements a standard SVM
 """
 from __future__ import print_function, division
 import numpy as np
-from aggregators.models.MISVM.quadprog import quadprog
-from aggregators.models.MISVM.kernel import by_name as kernel_by_name
-from aggregators.models.MISVM.util import spdiag
+from methods.MI.MISVM.quadprog import quadprog
+from methods.MI.MISVM.kernel import by_name as kernel_by_name
+from methods.MI.MISVM.util import spdiag
 from sklearn.base import ClassifierMixin, BaseEstimator
 
 

@@ -1,16 +1,17 @@
-from aggregators.models.aggregator.aggregator import Aggregator
+from methods.baseline import Baseline
 from skmultilearn.adapt import BRkNNaClassifier, BRkNNbClassifier
 from sklearn.model_selection import train_test_split
 from skmultilearn.adapt import BRkNNaClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import accuracy_score
 
-class BRkNN(Aggregator):
-    def __init__(self, k=5, is_pytorch_model=False):
-        super(BRkNN, self).__init__(is_pytorch_model)
-        self._classifier_a = BRkNNaClassifier(k=k)
-        self._classifier_b = BRkNNbClassifier(k=k)
-        self.parameters = {'k': range(1,k)}
+class BRkNN(Baseline):
+    def __init__(self, config):
+        super(BRkNN, self).__init__(is_pytorch_model=False)
+        self.k = config.k
+        self._classifier_a = BRkNNaClassifier(k=self.k)
+        self._classifier_b = BRkNNbClassifier(k=self.k)
+        self.parameters = {'k': range(1,self.k)}
         
     def train(self, bag_set, labels):
         

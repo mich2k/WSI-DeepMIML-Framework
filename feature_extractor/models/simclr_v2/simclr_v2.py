@@ -7,12 +7,14 @@ from torch.nn import Identity
 
 class SimCLRv2(FeatureExtractor):
 
-    def __init__(self, dataloader, checkpoint_path, versions, out_dimensionality=100, version_id="r101_1x_sk0"):
-        super().__init__(dataloader, checkpoint_path, versions, version_id, out_dimensionality)
+    def __init__(self, data_path, checkpoint_path, versions, config):
+        super().__init__(data_path, checkpoint_path, versions, config.version_id, versions[config.version_id].dimensionality)
                            
         self.model, _ = get_resnet(*name_to_params(self.version.get_version_id()))
+        self.linear_classifier = self.model.fc
         self._load_weights(self.version)
         self.embed_dim = 2048
+        self.num_labels = config.num_labels
 
 
 

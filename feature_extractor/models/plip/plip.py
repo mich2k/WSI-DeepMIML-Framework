@@ -3,28 +3,30 @@ import numpy as np
 from tqdm import tqdm
 from typing import List, Union, Tuple
 from torch.utils.data import DataLoader
+from feature_extractor.extractor.extractor import FeatureExtractor
 import PIL
 from transformers import CLIPModel, CLIPProcessor
 from datasets import Dataset, Image
 from utils import get_device
 
 
-class PLIP:
+class PLIP(FeatureExtractor):
 
-    def __init__(self, model_name, auth_token=None):
-        self.device = get_device()
-        self.model_name = model_name
-        self.model, self.preprocess, self.model_hash = self._load_model(model_name, auth_token=auth_token)
+    def __init__(self, data_path, checkpoint_path, versions, config):
+        super().__init__(data_path, checkpoint_path, versions, config.version_id, versions[config.version_id].dimensionality)
+        self.model_name = config.version_id
+        self.model, self.preprocess, self.model_hash = self._load_model(config.version_id, auth_token=config.auth_token)
         self.model = self.model.to(self.device)
-
+        self.embed_dim = self.model.projection_dim
+        self.num_labels = self.model.projection_dim
 
     def _load_model(self,
                     name: str,
                     device: Union[str, torch.device] = get_device(),
                     auth_token=None):
 
-        model = CLIPModel.from_pretrained(name, use_auth_token=auth_token)
-        preprocessing = CLIPProcessor.from_pretrained(name, use_auth_token=auth_token)
+        model = CLIPModel.from_pretrained(name, token=auth_token)
+        preprocessing = CLIPProcessor.from_pretrained(name, token=auth_token, device=device)
 
         return model, preprocessing, hash
 
@@ -116,3 +118,10 @@ class PLIP:
         # return np.argmax(cosine_sim, axis=-1)
         # return cosine_sim.argsort()[:,-top_k:][:,::-1]
 
+    def compute_features(self, x: torch.Tensor):
+        # return image features and linear projection output
+        x = self.preprocess(images=x, return_tensors='pt').to(self.device)
+        img_features = self.model.get_image_features(**x)
+        
+        # second output needs to be replaced with linear projection
+        return img_features, img_features

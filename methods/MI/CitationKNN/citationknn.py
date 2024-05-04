@@ -1,14 +1,14 @@
 import numpy as np
 import scipy.spatial.distance as dist
 import math
-from aggregators.models.aggregator.aggregator import Aggregator
-from aggregators.models.CitationKNN.cross_validation import cross_validation
+from methods.baseline import Baseline
+from methods.MI.CitationKNN.cross_validation import cross_validation
 from utils import binary_relevance_transformation
 
-class CitationKNN(Aggregator):
+class CitationKNN(Baseline):
 
-    def __init__(self, is_pytorch_model=False):
-        super(CitationKNN, self).__init__(is_pytorch_model)
+    def __init__(self, config):
+        super(CitationKNN, self).__init__(is_pytorch_model=False)
         self._bags = None
         self._bag_predictions = None
         self._labels = None

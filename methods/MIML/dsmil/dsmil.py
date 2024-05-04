@@ -1,16 +1,16 @@
 import torch
 from feature_extractor.extractor.extractor import FeatureExtractor
-from aggregators.models.aggregator.aggregator import Aggregator
-from aggregators.models.dsmil.bclassifier import BagClassifier
-from aggregators.models.dsmil.focal_loss import FocalLoss
+from methods.baseline import Baseline
+from methods.MIML.dsmil.bclassifier import BagClassifier
+from methods.MIML.dsmil.focal_loss import FocalLoss
 from torch.utils.data import DataLoader
 from torch.nn import BCEWithLogitsLoss
 import torch.nn as nn
 
-class DSMIL(nn.Module, Aggregator):
+class DSMIL(nn.Module, Baseline):
     def __init__(self, extractor: FeatureExtractor, config, is_pytorch_model=True):
         nn.Module.__init__(self)
-        Aggregator.__init__(self, is_pytorch_model)
+        Baseline.__init__(self, is_pytorch_model)
         self.bag_classifier = BagClassifier(extractor.embed_dim, config.num_classes, self.device)
         self.linear = nn.Linear(extractor.num_labels, config.num_classes).to(self.device)
         self.is_pytorch_model = is_pytorch_model
@@ -45,8 +45,7 @@ class DSMIL(nn.Module, Aggregator):
                         
                 if self.extractor is not None:
                     with torch.no_grad():
-                        feats = self.extractor.compute_features(inputs.float())
-                        class_scores = self.extractor.linear_classifier(feats)
+                        feats, class_scores = self.extractor.compute_features(inputs.float())
             
                 optimizer.zero_grad()
             

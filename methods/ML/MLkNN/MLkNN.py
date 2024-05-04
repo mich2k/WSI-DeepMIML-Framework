@@ -7,13 +7,13 @@ Created on Wed Feb 15 09:31:16 2017
 
 import numpy as np
 import scipy.io as sio
-import aggregators.models.MLkNN.evaluate as ev
 from sklearn.model_selection import KFold
-from aggregators.models.MLkNN.knn import *
-from aggregators.models.aggregator.aggregator import Aggregator
+from   methods.baseline import Baseline
+import methods.ML.MLkNN.evaluate as ev
+from   methods.ML.MLkNN.knn import *
  
     
-class MLkNN(Aggregator, object):
+class MLkNN(Baseline, object):
     s = 1
     k = 10
     labels_num = 0
@@ -28,8 +28,8 @@ class MLkNN(Aggregator, object):
     Peh1 = np.array([])
     Peh0 = np.array([])
     predict_labels = np.array([])
-    def __init__(self, is_pytorch_model=False):
-        super(MLkNN, self).__init__(is_pytorch_model)
+    def __init__(self, config):
+        super(MLkNN, self).__init__(is_pytorch_model=False)
 
     
     def fit(self):

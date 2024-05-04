@@ -4,8 +4,8 @@ Implements Single Instance Learning SVM
 from __future__ import print_function, division
 import numpy as np
 import inspect
-from aggregators.models.MISVM.svm import SVM
-from aggregators.models.MISVM.util import slices
+from methods.MI.MISVM.svm import SVM
+from methods.MI.MISVM.util import slices
 
 
 class SIL(SVM):
