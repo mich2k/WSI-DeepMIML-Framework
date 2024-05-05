@@ -8,6 +8,14 @@ class FastMIML(Baseline):
 
     def __init__(self, config):
         super(FastMIML, self).__init__(is_pytorch_model=False)
+        
+        ## parameters
+        self.D = config.D # dimension of the shared space
+        self.norm_up = config.norm_up # norm of each vector (upper bound for each norm)
+        self.maxiter = config.maxiter# number of iterations
+        self.step_size = config.step_size  # step size of SGD
+        self.lambda_reg = config.lambda_reg # regularization parameter        
+        self.num_sub = config.num_sub # number of sub concepts
     
     def FastMIML_train(self, train_data, train_targets, W, V, costs, norm_up, step_size0, num_sub, AW, AV, Anum, trounds, lambd, opts):
         average_begin = opts['average_begin']
@@ -214,13 +222,6 @@ class FastMIML(Baseline):
 
         train_data, test_data, train_targets, test_targets = train_test_split(bags, labels, test_size=0.2, random_state=42)
 
-        ## parameters
-        D = 100  # dimension of the shared space
-        norm_up = 10  # norm of each vector (upper bound for each norm)
-        maxiter = 40  # number of iterations
-        step_size = 0.005  # step size of SGD
-        lambda_reg = 1e-5
-        num_sub = 5  # number of sub concepts
         opts = {'norm': 1, 'average_size': 10, 'average_begin': 0}
 
         ## initialization
@@ -232,29 +233,29 @@ class FastMIML(Baseline):
         costs = 1.0 / np.arange(1, n_class+1).cumsum()
 
     # randomly generated V and W with mean 0 and standard deviation 1/sqrt(m)
-        V = np.random.normal(0, 1/np.sqrt(m), (D, m))  # D*m
-        W = np.random.normal(0, 1/np.sqrt(m), (D, n_class*num_sub))  # D*n_class
+        V = np.random.normal(0, 1/np.sqrt(m), (self.D, m))  # D*m
+        W = np.random.normal(0, 1/np.sqrt(m), (self.D, n_class*self.num_sub))  # D*n_class
         for k in range(m):
             tmp1 = V[:, k]
-            V[:, k] = tmp1*norm_up/np.linalg.norm(tmp1)
-        for k in range(n_class*num_sub):
+            V[:, k] = tmp1*self.norm_up/np.linalg.norm(tmp1)
+        for k in range(n_class*self.num_sub):
             tmp1 = W[:, k]
-            W[:, k] = tmp1*norm_up/np.linalg.norm(tmp1)
+            W[:, k] = tmp1*self.norm_up/np.linalg.norm(tmp1)
 
-        AW = np.zeros((D, n_class*num_sub))
-        AV = np.zeros((D, m))
+        AW = np.zeros((self.D, n_class*self.num_sub))
+        AV = np.zeros((self.D, m))
         Anum = 0
         trounds = 0   # no of rounds in SGD
 
         ## train
-        for i in range(maxiter):
+        for i in range(self.maxiter):
             print(i)
-            W, V, AW, AV, Anum, trounds = self.FastMIML_train(train_data, train_targets, W, V, costs, norm_up, step_size, num_sub, AW, AV, Anum, trounds, lambda_reg, opts)
+            W, V, AW, AV, Anum, trounds = self.FastMIML_train(train_data, train_targets, W, V, costs, self.norm_up, self.step_size, self.num_sub, AW, AV, Anum, trounds, self.lambda_reg, opts)
 
-            ## test
-            test_outputs, test_labels = self.FastMIML_test(test_data, AW/Anum, AV/Anum, num_sub)
-            precision, recall, f1 = compute_metrics(test_labels, test_targets)
+        ## test
+        test_outputs, test_labels = self.FastMIML_test(test_data, AW/Anum, AV/Anum, self.num_sub)
+        precision, recall, f1 = compute_metrics(test_labels, test_targets)
         
-            print(f'Epochs: {maxiter} - Precision: {precision} - Recall: {recall} - F1: {f1}')
+        print(f'Epochs: {i} - Precision: {precision} - Recall: {recall} - F1: {f1}')
 
 
