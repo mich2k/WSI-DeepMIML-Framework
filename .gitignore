@@ -179,3 +179,4 @@ external/*
 .DS_store
 train_miml.py
 test.*
+*.txt

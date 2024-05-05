@@ -11,6 +11,7 @@ import yaml
 import pandas as pd
 import cv2
 from tqdm import tqdm
+from sklearn.metrics import precision_score, recall_score, f1_score 
 
 
 class DiffInfiniteDataset(Dataset):
@@ -128,7 +129,6 @@ class MultiLabelDataset(Dataset):
     
     def get_data(self):
         return self.images, self.labels
-        
 
 class ImageNetValidationDatasetLoader(Dataset):
     def __init__(self, val_path):
@@ -223,3 +223,22 @@ def binary_relevance_transformation(images, labels, nested_array=True, get_bags 
             return np.array(mi_features), np.array(mi_labels), bags
         
         return np.array(mi_features), np.array(mi_labels)
+    
+
+def compute_metrics(pred, target):
+    
+    # Check if it is a numpy array
+    if isinstance(pred, torch.Tensor):
+        pred = pred.cpu().detach().numpy()
+        
+    if isinstance(target, torch.Tensor):
+        target = target.cpu().detach().numpy()
+    
+    threshold = 0.7
+    
+    # Compute precision, recall, f1-score
+    precision = precision_score(target, (pred > threshold), average='weighted', zero_division=0)
+    recall = recall_score(target, (pred > threshold), average='weighted',  zero_division=0)
+    f1_scr = f1_score(target, (pred > threshold), average='weighted',  zero_division=0)
+    
+    return precision, recall, f1_scr

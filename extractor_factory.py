@@ -19,7 +19,7 @@ def build_extractor(config, dataloader=None, custom_weights=False, num_labels=10
 
     try:
         extractor_conf = config.extractors[config.using_extractor]
-        return ext_factory[config.using_extractor](config.data_path, config.checkpoint_path, versions_dict, extractor_conf)
+        return ext_factory[config.using_extractor](config.trainset_path, config.checkpoint_path, versions_dict, extractor_conf)
 
     except NotImplementedError as e:
         print(f"Error: {e} - Using default fallback extractor - {config.using_extractor} not implemented.")

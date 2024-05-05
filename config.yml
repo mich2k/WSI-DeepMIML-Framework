@@ -1,6 +1,7 @@
 using_extractor: "dino" #  Which feature extractor [simclr_v2, dino, plip, None] 
-method: "dsmil" # Which miml method to use [brknn, cknn, dsmil, fastmiml, milr, misvm, mlknn]
-data_path: "datasets/diffinfinite_tr1/"
+method: "milr" # Which miml method to use [brknn, cknn, dsmil, fastmiml, milr, misvm, mlknn]
+trainset_path: "datasets/diffinfinite_tr1/"
+testset_path: "datasets/diffinfinite_tr2/"
 checkpoint_path: "checkpoints/"
 
 extractors:  
@@ -52,7 +53,7 @@ miml_methods:
       weight_decay: 0.00005
       num_workers: 10
       num_classes: 5
-      loss: "BCE" #BCE or focal
+      loss: "focal" #BCE or focal
   fastmiml:
   milr:
   MISVM:

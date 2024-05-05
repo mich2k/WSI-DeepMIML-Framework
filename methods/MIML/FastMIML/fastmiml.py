@@ -2,6 +2,7 @@ import numpy as np
 import random
 from sklearn.model_selection import train_test_split
 from methods.baseline import Baseline
+from utils import compute_metrics
 
 class FastMIML(Baseline):
 
@@ -204,16 +205,19 @@ class FastMIML(Baseline):
         # Return the pres and labels arrays
         return pres, labels
 
-    def train(self, bags, labels):
+    def run(self, bags, labels):
         # train_data: n*1 cells, one cell for a bag, each cell is a n_ins*d matrix
+        bags = bags.reshape(bags.shape[0], 1, bags.shape[1], -1)
+        labels = labels.reshape(labels.shape[0], -1)
         # train_targets: n*n_class, one row for a bag
+        
 
         train_data, test_data, train_targets, test_targets = train_test_split(bags, labels, test_size=0.2, random_state=42)
-        
+
         ## parameters
         D = 100  # dimension of the shared space
         norm_up = 10  # norm of each vector (upper bound for each norm)
-        maxiter = 10  # number of iterations
+        maxiter = 40  # number of iterations
         step_size = 0.005  # step size of SGD
         lambda_reg = 1e-5
         num_sub = 5  # number of sub concepts
@@ -244,12 +248,13 @@ class FastMIML(Baseline):
 
         ## train
         for i in range(maxiter):
+            print(i)
             W, V, AW, AV, Anum, trounds = self.FastMIML_train(train_data, train_targets, W, V, costs, norm_up, step_size, num_sub, AW, AV, Anum, trounds, lambda_reg, opts)
 
-        ## test
-        test_outputs, test_labels = self.FastMIML_test(test_data, AW/Anum, AV/Anum, num_sub)
-        print(test_outputs, test_labels)
+            ## test
+            test_outputs, test_labels = self.FastMIML_test(test_data, AW/Anum, AV/Anum, num_sub)
+            precision, recall, f1 = compute_metrics(test_labels, test_targets)
         
-        return test_outputs, test_labels
+            print(f'Epochs: {maxiter} - Precision: {precision} - Recall: {recall} - F1: {f1}')
 
 
