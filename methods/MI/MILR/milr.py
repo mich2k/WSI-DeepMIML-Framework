@@ -10,6 +10,7 @@ from methods.MI.MILR.utils import logsumexp_safe, generalized_mean
 from methods.MI.MILR.utils import make_dataset_from_dataframe
 from sklearn.preprocessing import StandardScaler
 from utils import binary_relevance_transformation
+from pprint import pprint
 torch.manual_seed(1)
 
 PARAMETERIZED_BAG_FUNCTIONS = ("logsumexp", "generalized_mean")
@@ -218,6 +219,9 @@ class MILR(nn.Module, Baseline):
         bags.masked_fill_(padding_mask, 0)
         return bags, ~padding_mask
     
+    def print_results(self, res):
+        pprint(res)
+    
     def run(self, trainset, testset):
         
         X, y = trainset.get_data()
@@ -226,7 +230,7 @@ class MILR(nn.Module, Baseline):
         scaler = StandardScaler().fit(X)
         X = scaler.transform(X)
         
-        kf = KFold(n_splits=2, shuffle=True, random_state=42)
+        kf = KFold(n_splits=5, shuffle=True, random_state=42)
         res = []
         for bag_fn in ['max', 'product' ,'logsumexp', 'likelihood_ratio']:
             print(bag_fn)
@@ -248,5 +252,6 @@ class MILR(nn.Module, Baseline):
             this_report['auc'] = roc_auc_score(y_true, y_prob)
             this_report.update(classification_report(y_true, y_pred, output_dict=True, zero_division=0))
             res.append(this_report)
-            
-        print(res)
+        
+        self.print_results(res)    
+    
