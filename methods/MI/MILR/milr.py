@@ -2,10 +2,11 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
+from torch.nn.utils import clip_grad_norm_
 from sklearn.model_selection import KFold
 from sklearn.metrics import classification_report, roc_auc_score
 from methods.baseline import Baseline
-from methods.MI.MILR.utils import invlogit, logsumexp_safe, generalized_mean
+from methods.MI.MILR.utils import logsumexp_safe, generalized_mean
 from methods.MI.MILR.utils import make_dataset_from_dataframe
 from sklearn.preprocessing import StandardScaler
 from utils import binary_relevance_transformation
@@ -25,7 +26,7 @@ class MILR(nn.Module, Baseline):
         self.bag_fn = None
 
     def _predict_instance(self, X):
-        return invlogit(self.linear(X))
+        return torch.sigmoid(self.linear(X))
 
     def forward(self, X, bags, bags_mask, bag_fn):
         self.bag_fn = bag_fn
@@ -118,14 +119,18 @@ class MILR(nn.Module, Baseline):
         loss_function = nn.NLLLoss()
 
         if optimizer is None:
-            optimizer = optim.AdamW(self.parameters(), lr=lr, weight_decay=1e-4)
+            optimizer = optim.AdamW(self.parameters(), lr=lr, weight_decay=1e-5)
 
         self.metrics = []
         for _ in range(epochs):
             self.zero_grad()
+            
             log_probs = self(X, bags, bags_mask, bag_fn)
+            
             loss = loss_function(log_probs, y)
+            
             loss.backward()
+            
             optimizer.step()
 
             if loss.isnan():
@@ -213,15 +218,17 @@ class MILR(nn.Module, Baseline):
         bags.masked_fill_(padding_mask, 0)
         return bags, ~padding_mask
     
-    def train(self, dataset):
+    def run(self, trainset, testset):
         
-        X, y = dataset.get_data()
+        X, y = trainset.get_data()
         X, y, bags = binary_relevance_transformation(X, y, nested_array=False, get_bags=True)
         X = X.reshape(X.shape[0], -1)
+        scaler = StandardScaler().fit(X)
+        X = scaler.transform(X)
         
-        kf = KFold(n_splits=10, shuffle=True, random_state=42)
+        kf = KFold(n_splits=2, shuffle=True, random_state=42)
         res = []
-        for bag_fn in ['max', 'logsumexp', 'likelihood_ratio']:
+        for bag_fn in ['max', 'product' ,'logsumexp', 'likelihood_ratio']:
             print(bag_fn)
             y_true = []
             y_pred = []
@@ -229,7 +236,7 @@ class MILR(nn.Module, Baseline):
             for train, test in kf.split(bags):
                 bags_train = [bags[i] for i in train]
                 bags_test = [bags[i] for i in test]
-                self.fit(X, y[train], bags_train, epochs=100, lr=1e-2, bag_fn=bag_fn)
+                self.fit(X, y[train], bags_train, epochs=100, lr=1e-6, bag_fn=bag_fn)
                 y_true.append(y[test])
                 y_pred.append(self.predict(X, bags_test))
                 y_prob.append(self.predict_proba(X, bags_test)[:, 1])
@@ -241,3 +248,5 @@ class MILR(nn.Module, Baseline):
             this_report['auc'] = roc_auc_score(y_true, y_prob)
             this_report.update(classification_report(y_true, y_pred, output_dict=True, zero_division=0))
             res.append(this_report)
+            
+        print(res)

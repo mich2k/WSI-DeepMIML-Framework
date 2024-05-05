@@ -11,8 +11,10 @@ class MILNet():
     def train_model(self, train_path: str, test_path: str): 
          
         # Load dataset
-        trainset = DiffInfiniteDataset(train_path, stop_at=600)
-        testset = DiffInfiniteDataset(test_path, stop_at=200)
+        trainset = DiffInfiniteDataset(train_path, stop_at=4)
+        testset = DiffInfiniteDataset(test_path, stop_at=10)
+        
+        test = MultiLabelDataset(10)
         
         if not self.model.is_pytorch_model:
             # Get data and labels

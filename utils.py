@@ -187,28 +187,32 @@ def get_sample_batch(n, channels=3):
         inputs.append(torch.randn((channels,255,255)))
     return torch.stack(inputs).to(get_device())
 
-def binary_relevance_transformation(images, labels, nested_array=True, get_bags = False, stop_at=0, bag_shape = 10):
+def binary_relevance_transformation(images, labels, nested_array=True, get_bags = False, stop_at=0):
         
         # Apply binary relevance transformation
         mi_features = []
         mi_labels = []
         bags = []
         
-        for i in range(len(labels)):
+        
+        #images (batch_size, bag_size, channels, height, width)
+        #labels (batch_size, num_classes)
+        
+        batch_size = images.shape[0]
+        labels = labels.reshape(batch_size, -1)
+        
+        # For each element in the batch
+        for i in range(batch_size):
+            
             if len(mi_features) == stop_at and stop_at != 0:
-                    break
-                
+                break
+            
             bag = []
             
+            # For each label related to a single bag
             for j in range(labels.shape[1]):
                 
-                # Append a np vector of shape (bag_shape, images.reshape(1,-1))
-                mi_features.append(np.zeros((bag_shape, images[i].flatten().shape[0])))
-                                
-                for idx in range(bag_shape):
-                    #replace each bag_shape vector with image
-                    mi_features[-1][idx]= images[i].reshape(1, -1)
-                                  
+                mi_features.append(images[i])
                 if nested_array:
                     mi_labels.append([labels[i][j]])
                 else:
@@ -217,7 +221,7 @@ def binary_relevance_transformation(images, labels, nested_array=True, get_bags 
                 if get_bags:
                     bag.append(i + j)
                 
-            bags.append(np.array(bag))
+                bags.append(np.array(bag))
         
         if get_bags:
             return np.array(mi_features), np.array(mi_labels), bags
