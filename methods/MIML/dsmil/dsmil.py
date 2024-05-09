@@ -73,9 +73,11 @@ class DSMIL(nn.Module, Baseline):
             
             predictions = self.forward(feats, class_scores)
             
+            loss = self.criterion(predictions, labels.float())
+            
             precision, recall, f1 = compute_metrics(predictions, labels)
                 
-            print(f"Iteration {i} - Precision: {precision} - Recall: {recall} - F1: {f1}")
+            print(f"Iteration {i} - {self.loss} Loss: {loss.item()} - Precision: {precision} - Recall: {recall} - F1: {f1}")
             
     def run(self, trainset, testset):
         

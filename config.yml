@@ -1,5 +1,5 @@
 using_extractor: "dino" #  Which feature extractor [simclr_v2, dino, plip, None] 
-method: "milr" # Which miml method to use [brknn, cknn, dsmil, fastmiml, milr, misvm, mlknn]
+method: "mlknn" # Which miml method to use [brknn, cknn, dsmil, fastmiml, milr, misvm, mlknn]
 trainset_path: "datasets/diffinfinite_tr1/"
 testset_path: "datasets/diffinfinite_tr2/"
 checkpoint_path: "checkpoints/"
@@ -46,6 +46,7 @@ extractors:
 miml_methods:
   brknn:
       k: 5
+      epoch: 15
   cknn:
   dsmil:
       lr: 0.0002
@@ -57,7 +58,7 @@ miml_methods:
   fastmiml:
       D: 100
       norm_up: 10
-      maxiter: 5
+      maxiter: 10
       step_size: 0.005
       lambda_reg: 0.00001
       num_sub: 5
@@ -65,6 +66,9 @@ miml_methods:
   MISVM:
     restarts: 0
     max_iters: 50
+    epoch: 10
     C: 1
     kernel: "linear"
+
   mlknn:
+      epoch: 10

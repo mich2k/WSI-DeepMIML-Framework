@@ -16,7 +16,8 @@ from methods.MI.MISVM.util import partition, BagSplitter, spdiag, rand_convex, s
 from utils import binary_relevance_transformation
 from sklearn.model_selection import train_test_split
 from scipy.sparse import issparse
-import pdb
+from utils import compute_metrics
+from torch.utils.data import DataLoader
 
 
 class MISVM(SIL, Baseline):
@@ -45,6 +46,7 @@ class MISVM(SIL, Baseline):
         Baseline.__init__(self, is_pytorch_model=False)
         self.restarts = config.restarts
         self.max_iters = config.max_iters
+        self.epoch = config.epoch
         
     
     def fit(self, bags, y):
@@ -184,13 +186,28 @@ class MISVM(SIL, Baseline):
         super_args.update({key: getattr(self, key, None) for key in args})
         return super_args
     
-    def train(self, X, y):
-        X, y = binary_relevance_transformation(X, y, nested_array=False, bag_shape=10)
-        train_bags, test_bags, train_labels, test_labels = train_test_split(X, y, test_size=0.33, random_state=42)
-        self.fit(train_bags, train_labels)
-        predictions = self.predict(test_bags)
-        accuracy = np.average(test_labels == np.sign(predictions))
-        print('\n%s Accuracy: %.1f%%' % ("miSVM", 100 * accuracy))
+    def run(self, train_set, test_set):
+        train_loader = DataLoader(train_set, batch_size=15, shuffle=True)
+        test_loader = DataLoader(test_set, batch_size=15, shuffle=True)
+        for _ in range(self.epoch):
+            for X, y in train_loader:
+                X, y = binary_relevance_transformation(X, y, nested_array=False)
+                train_bags, test_bags, train_labels, test_labels = train_test_split(X, y, test_size=0.33, random_state=42)
+                train_bags = train_bags.reshape(train_bags.shape[0], -1)
+                test_bags = test_bags.reshape(test_bags.shape[0], -1)
+                self.fit(train_bags, train_labels)
+                predictions = self.predict(test_bags)
+                
+                accuracy, precision, recall, f1 = compute_metrics(predictions, test_labels)
+                print(f"Accuracy: {100*accuracy}, Precision: {precision}, Recall: {recall}, F1: {f1}")
+                
+            for X, y in test_loader:
+                X, y = binary_relevance_transformation(X, y, nested_array=False)
+                _, test_bags, _, test_labels = train_test_split(X, y, test_size=0.66, random_state=42)
+                test_bags = test_bags.reshape(test_bags.shape[0], -1)
+                predictions = self.predict(test_bags)
+                accuracy, precision, recall, f1 = compute_metrics(predictions, test_labels)
+                print(f"Accuracy: {100*accuracy}, Precision: {precision}, Recall: {recall}, F1: {f1}")
 
 
 class miSVM(SIL, Baseline):
@@ -315,13 +332,15 @@ class miSVM(SIL, Baseline):
         super_args.update({key: getattr(self, key, None) for key in args})
         return super_args
     
-    def train(self, X, y):
+    def run(self, X, y):
         X, y = binary_relevance_transformation(X, y, nested_array=False, bag_shape=10)
         train_bags, test_bags, train_labels, test_labels = train_test_split(X, y, test_size=0.33, random_state=42)
         self.fit(train_bags, train_labels)
         predictions = self.predict(test_bags)
         accuracy = np.average(test_labels == np.sign(predictions))
-        print('\n%s Accuracy: %.1f%%' % ("miSVM", 100 * accuracy))
+        precision, recall, f1 = compute_metrics(test_labels, predictions)
+        print(f"Accuracy: {100*accuracy}, Precision: {precision}, Recall: {recall}, F1: {f1}")
+        
 
 
 def _update_classes(x):

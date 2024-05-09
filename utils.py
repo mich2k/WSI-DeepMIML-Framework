@@ -11,7 +11,7 @@ import yaml
 import pandas as pd
 import cv2
 from tqdm import tqdm
-from sklearn.metrics import precision_score, recall_score, f1_score 
+from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 
 
 class DiffInfiniteDataset(Dataset):
@@ -240,9 +240,14 @@ def compute_metrics(pred, target):
     
     threshold = 0.7
     
+    # check if target has continous values or integers
+    if 'float' not in target.dtype.name:
+        pred = (pred > threshold).astype(int)
+            
     # Compute precision, recall, f1-score
-    precision = precision_score(target, (pred > threshold), average='weighted', zero_division=0)
-    recall = recall_score(target, (pred > threshold), average='weighted',  zero_division=0)
-    f1_scr = f1_score(target, (pred > threshold), average='weighted',  zero_division=0)
+    accuracy = accuracy_score(target, pred)
+    precision = precision_score(target, pred, average='weighted', zero_division=0)
+    recall = recall_score(target, pred, average='weighted',  zero_division=0)
+    f1_scr = f1_score(target, pred, average='weighted',  zero_division=0)
     
-    return precision, recall, f1_scr
+    return accuracy, precision, recall, f1_scr

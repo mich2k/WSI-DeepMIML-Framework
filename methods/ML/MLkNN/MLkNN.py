@@ -11,6 +11,7 @@ from sklearn.model_selection import KFold
 from   methods.baseline import Baseline
 import methods.ML.MLkNN.evaluate as ev
 from   methods.ML.MLkNN.knn import *
+from torch.utils.data import DataLoader
  
     
 class MLkNN(Baseline, object):
@@ -30,6 +31,7 @@ class MLkNN(Baseline, object):
     predict_labels = np.array([])
     def __init__(self, config):
         super(MLkNN, self).__init__(is_pytorch_model=False)
+        self.epoch = config.epoch
 
     
     def fit(self):
@@ -121,3 +123,40 @@ class MLkNN(Baseline, object):
             self.fit()
             labels = self.predict(val_X)
             self.evaluate(val_Y)
+    
+    def test(self, X, y):
+        data,target = X, y
+
+        kf = KFold(n_splits=10, shuffle=True, random_state=2017)
+        for tr_index,val_index in kf.split(data):
+            tr_X,val_X = data[tr_index],data[val_index]
+            tr_Y,val_Y = target[tr_index],target[val_index]
+            
+            self.train_data = tr_X
+            self.train_target = tr_Y
+            self.k = 10
+            self.labels_num = tr_Y.shape[1]
+            self.train_data_num = self.train_data.shape[0]
+            self.Ph1 = np.zeros((self.labels_num,))
+            self.Ph0 = np.zeros((self.labels_num,))
+            self.Peh1 = np.zeros((self.labels_num, self.k + 1))
+            self.Peh0 = np.zeros((self.labels_num, self.k + 1))
+                        
+            #self.fit()
+            labels = self.predict(val_X)
+            self.evaluate(val_Y)
+
+    def run(self, trainset, testset):
+        
+        trainloader = DataLoader(trainset, batch_size=15, shuffle=True, pin_memory=True)
+        testloader = DataLoader(testset, batch_size=15, shuffle=True, pin_memory=True)
+        
+        for _ in range(self.epoch):
+            for inputs, labels in trainloader:
+                labels = labels.reshape(labels.shape[0], -1)
+                self.train(inputs, labels)
+            for inputs, labels in testloader:
+                labels = labels.reshape(labels.shape[0], -1)
+                self.test(inputs, labels)
+        
+        

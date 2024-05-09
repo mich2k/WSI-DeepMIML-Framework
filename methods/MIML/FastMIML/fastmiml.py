@@ -251,11 +251,11 @@ class FastMIML(Baseline):
         for i in range(self.maxiter):
             print(i)
             W, V, AW, AV, Anum, trounds = self.FastMIML_train(train_data, train_targets, W, V, costs, self.norm_up, self.step_size, self.num_sub, AW, AV, Anum, trounds, self.lambda_reg, opts)
-
-        ## test
-        test_outputs, test_labels = self.FastMIML_test(test_data, AW/Anum, AV/Anum, self.num_sub)
-        precision, recall, f1 = compute_metrics(test_labels, test_targets)
+            ## test
+            test_outputs, test_labels = self.FastMIML_test(test_data, AW/Anum, AV/Anum, self.num_sub)
+            
+            precision, recall, f1 = compute_metrics(test_labels, test_targets)
         
-        print(f'Epochs: {i} - Precision: {precision} - Recall: {recall} - F1: {f1}')
+            print(f'Epochs: {i} - Precision: {precision} - Recall: {recall} - F1: {f1}')
 
 
