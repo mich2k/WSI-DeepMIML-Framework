@@ -142,7 +142,7 @@ def OneError(outputs, test_target):
             num = num + 1
             if test_target[i][index] != 1:
                 one_error = one_error + 1
-    return one_error/num
+    return one_error/ num if num != 0 else 0
     
 def rloss(outputs, test_target):
     test_data_num = outputs.shape[0]
@@ -174,7 +174,7 @@ def rloss(outputs, test_target):
                     temp = temp + 1
         rankloss = rankloss + temp/(m*n)
     
-    rankloss = rankloss/instance_num
+    rankloss = rankloss/instance_num if instance_num != 0 else 0
     return rankloss
     
 def SubsetAccuracy(predict_labels, test_target):
