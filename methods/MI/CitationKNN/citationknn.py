@@ -4,6 +4,7 @@ import math
 from methods.baseline import Baseline
 from methods.MI.CitationKNN.cross_validation import cross_validation
 from utils import binary_relevance_transformation
+from torch.utils.data import DataLoader
 
 class CitationKNN(Baseline):
 
@@ -14,6 +15,8 @@ class CitationKNN(Baseline):
         self._labels = None
         self._full_bags = None
         self._DM = None
+        self.epoch = config.epoch
+        self.folds = config.folds
 
     def fit(self, train_bags, train_labels, **kwargs):
         self._bags = train_bags
@@ -106,7 +109,7 @@ class CitationKNN(Baseline):
                     
         return Matrix
     
-    def train(self, bag_set, labels, folds=10):
+    def train(self, bag_set, labels):
         
         # Convert MIML data in MI
         
@@ -114,9 +117,38 @@ class CitationKNN(Baseline):
         
         for k in range(2, 11):
             parameters_citationknn = {'references': k, 'citers': k+2}
-            accuracy_model = cross_validation(bags, mi_labels, model=self, folds=folds, parameters=parameters_citationknn)
+            accuracy, precision, recall, f1 = cross_validation(bags, mi_labels, model=self, folds=self.folds, parameters=parameters_citationknn)
             print("k=" + str(k)+", references="+str(k)+", citers="+str(k+2))
-            print("citation knn accuracy = "+str(accuracy_model))
+            print(f"Accuracy: {accuracy}, Precision: {precision}, Recall: {recall}, F1: {f1}")
+    
+    def test(self, bag_set, labels):
+        
+        bags, mi_labels = binary_relevance_transformation(bag_set, labels)
+        for k in range(2, 11):
+            parameters_citationknn = {'references': k, 'citers': k+2}
+            accuracy, precision, recall, f1 = cross_validation(bags, mi_labels, model=self, folds=self.folds, parameters=parameters_citationknn, test=True)
+            
+            print("k=" + str(k)+", references="+str(k)+", citers="+str(k+2))
+            print(f"Accuracy: {accuracy}, Precision: {precision}, Recall: {recall}, F1: {f1}")
+            
+    def run(self, trainset, testset):
+        
+        trainloader = DataLoader(trainset, batch_size=15, shuffle=True, pin_memory=True)
+        testloader = DataLoader(testset, batch_size=15, shuffle=True, pin_memory=True)
+        
+        for _ in range(self.epoch):
+            print("Epoch: "+str(_))
+            print("Training")
+            for inputs, labels in trainloader:
+                #inputs = inputs.detach().numpy()
+                #labels = labels.detach().numpy()
+                inputs = inputs.reshape(inputs.shape[0], inputs.shape[1], -1)
+                labels = labels.reshape(labels.shape[0], -1)
+                self.train(inputs, labels)
+            print("Testing")
+            for inputs, labels in testloader:
+                inputs = inputs.reshape(inputs.shape[0],inputs[1].shape, -1)
+                self.test(testset.bags, testset.labels)
 
 def _min_hau_bag(X,Y):
     
