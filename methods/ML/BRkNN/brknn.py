@@ -37,11 +37,9 @@ class BRkNN(Baseline):
         
         
         # Train classifier
-        print('Training BRkNNaClassifier')
         self.clf_a.fit(X_train, y_train)
         predictions_a = self.clf_a.predict(X_test) 
         
-        print('Training BRkNNbClassifier')
         self.clf_b.fit(X_train, y_train)
         predictions_b = self.clf_b.predict(X_test) 
         
@@ -64,10 +62,7 @@ class BRkNN(Baseline):
         X_test = X_test.reshape(X_test.shape[0], -1)
         y_test = y_test.reshape(y_test.shape[0], -1)
         
-        print('Testing BRkNNaClassifier')
         predictions_a = self.clf_a.predict(X_test)
-        
-        print('Testing BRkNNbClassifier')
         predictions_b = self.clf_b.predict(X_test) 
         
         accuracy_a, precision_a, recall_a, f1_a = compute_metrics(predictions_a, y_test) 
@@ -79,12 +74,14 @@ class BRkNN(Baseline):
         
     def run(self, trainset, testset):
         
-        trainloader = DataLoader(trainset, batch_size=15, shuffle=True, pin_memory=True)
-        testloader = DataLoader(testset, batch_size=15, shuffle=True, pin_memory=True)
+        trainloader = DataLoader(trainset, batch_size=20, shuffle=True, pin_memory=True)
+        testloader = DataLoader(testset, batch_size=20, shuffle=True, pin_memory=True)
         
         for _ in range(self.epoch):
+            print(f"Train Epoch: {_}")
             for inputs, labels in trainloader:
                 self.train(inputs, labels)
-
+                
+            print(f"Test Epoch: {_}")
             for inputs, labels in testloader:
                 self.test(inputs, labels)

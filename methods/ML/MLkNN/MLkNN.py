@@ -12,6 +12,7 @@ from   methods.baseline import Baseline
 import methods.ML.MLkNN.evaluate as ev
 from   methods.ML.MLkNN.knn import *
 from torch.utils.data import DataLoader
+from utils import compute_metrics
  
     
 class MLkNN(Baseline, object):
@@ -148,13 +149,16 @@ class MLkNN(Baseline, object):
 
     def run(self, trainset, testset):
         
-        trainloader = DataLoader(trainset, batch_size=15, shuffle=True, pin_memory=True)
-        testloader = DataLoader(testset, batch_size=15, shuffle=True, pin_memory=True)
+        trainloader = DataLoader(trainset, batch_size=20, shuffle=True, pin_memory=True)
+        testloader = DataLoader(testset, batch_size=20, shuffle=True, pin_memory=True)
         
         for _ in range(self.epoch):
+            print("epoch: ", _)
+            print("train")
             for inputs, labels in trainloader:
                 labels = labels.reshape(labels.shape[0], -1)
                 self.train(inputs, labels)
+            print("test")
             for inputs, labels in testloader:
                 labels = labels.reshape(labels.shape[0], -1)
                 self.test(inputs, labels)

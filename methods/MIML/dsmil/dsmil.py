@@ -53,9 +53,9 @@ class DSMIL(nn.Module, Baseline):
             
                 self.optimizer.step()
                 
-                precision, recall, f1 = compute_metrics(predictions, labels)
+                accuracy, precision, recall, f1 = compute_metrics(predictions, labels)
                 
-                print(f"Iteration {i} - {self.loss} Loss: {loss.item()} - Precision: {precision} - Recall: {recall} - F1: {f1}")
+                print(f"Iteration {i} - Accurarcy: {accuracy} - {self.loss} Loss: {loss.item()} - Precision: {precision} - Recall: {recall} - F1: {f1}")
             
     def test(self):
                 
@@ -75,9 +75,9 @@ class DSMIL(nn.Module, Baseline):
             
             loss = self.criterion(predictions, labels.float())
             
-            precision, recall, f1 = compute_metrics(predictions, labels)
+            accuracy, precision, recall, f1 = compute_metrics(predictions, labels)
                 
-            print(f"Iteration {i} - {self.loss} Loss: {loss.item()} - Precision: {precision} - Recall: {recall} - F1: {f1}")
+            print(f"Iteration {i} - Accurarcy: {accuracy} - {self.loss} Loss: {loss.item()} - Precision: {precision} - Recall: {recall} - F1: {f1}")
             
     def run(self, trainset, testset):
         

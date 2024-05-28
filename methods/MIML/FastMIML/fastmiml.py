@@ -3,6 +3,7 @@ import random
 from sklearn.model_selection import train_test_split
 from methods.baseline import Baseline
 from utils import compute_metrics
+from torch.utils.data import DataLoader
 
 class FastMIML(Baseline):
 
@@ -16,6 +17,26 @@ class FastMIML(Baseline):
         self.step_size = config.step_size  # step size of SGD
         self.lambda_reg = config.lambda_reg # regularization parameter        
         self.num_sub = config.num_sub # number of sub concepts
+        self.epoch = config.epoch
+        self.initiated = False
+        
+    def init_params(self, m, n_class):
+        self.initiated = True
+        self.V = np.random.normal(0, 1/np.sqrt(m), (self.D, m))  # D*m
+        self.W = np.random.normal(0, 1/np.sqrt(m), (self.D, n_class*self.num_sub))  # D*n_class
+        for k in range(m):
+            tmp1 = self.V[:, k]
+            self.V[:, k] = tmp1*self.norm_up/np.linalg.norm(tmp1)
+        for k in range(n_class*self.num_sub):
+            tmp1 = self.W[:, k]
+            self.W[:, k] = tmp1*self.norm_up/np.linalg.norm(tmp1)
+
+        self.AW = np.zeros((self.D, n_class*self.num_sub))
+        self.AV = np.zeros((self.D, m))
+        self.Anum = 0
+        self.trounds = 0   # no of rounds in SGD
+        self.costs = 1.0 / np.arange(1, n_class+1).cumsum()
+
     
     def FastMIML_train(self, train_data, train_targets, W, V, costs, norm_up, step_size0, num_sub, AW, AV, Anum, trounds, lambd, opts):
         average_begin = opts['average_begin']
@@ -213,49 +234,54 @@ class FastMIML(Baseline):
         # Return the pres and labels arrays
         return pres, labels
 
-    def run(self, bags, labels):
+    def train(self, bags, labels, is_test=False):
         # train_data: n*1 cells, one cell for a bag, each cell is a n_ins*d matrix
         bags = bags.reshape(bags.shape[0], 1, bags.shape[1], -1)
         labels = labels.reshape(labels.shape[0], -1)
         # train_targets: n*n_class, one row for a bag
         
-
+        
+        bags = bags.detach().numpy()
+        labels = labels.detach().numpy()
+        
         train_data, test_data, train_targets, test_targets = train_test_split(bags, labels, test_size=0.2, random_state=42)
 
+        
         opts = {'norm': 1, 'average_size': 10, 'average_begin': 0}
 
         ## initialization
         #creating and adding a dummy variable:
         train_targets = np.hstack((train_targets, np.ones((train_targets.shape[0], 1))*2))
-        n_class = train_targets.shape[1]
 
-        m = train_data[:][0][0].shape[0]
-        costs = 1.0 / np.arange(1, n_class+1).cumsum()
-
-    # randomly generated V and W with mean 0 and standard deviation 1/sqrt(m)
-        V = np.random.normal(0, 1/np.sqrt(m), (self.D, m))  # D*m
-        W = np.random.normal(0, 1/np.sqrt(m), (self.D, n_class*self.num_sub))  # D*n_class
-        for k in range(m):
-            tmp1 = V[:, k]
-            V[:, k] = tmp1*self.norm_up/np.linalg.norm(tmp1)
-        for k in range(n_class*self.num_sub):
-            tmp1 = W[:, k]
-            W[:, k] = tmp1*self.norm_up/np.linalg.norm(tmp1)
-
-        AW = np.zeros((self.D, n_class*self.num_sub))
-        AV = np.zeros((self.D, m))
-        Anum = 0
-        trounds = 0   # no of rounds in SGD
-
-        ## train
-        for i in range(self.maxiter):
-            print(i)
-            W, V, AW, AV, Anum, trounds = self.FastMIML_train(train_data, train_targets, W, V, costs, self.norm_up, self.step_size, self.num_sub, AW, AV, Anum, trounds, self.lambda_reg, opts)
-            ## test
-            test_outputs, test_labels = self.FastMIML_test(test_data, AW/Anum, AV/Anum, self.num_sub)
-            
-            precision, recall, f1 = compute_metrics(test_labels, test_targets)
+        if not self.initiated:
+            n_class = train_targets.shape[1]
+            m = train_data[:][0][0].shape[0]
+            self.init_params(m, n_class)
         
-            print(f'Epochs: {i} - Precision: {precision} - Recall: {recall} - F1: {f1}')
-
-
+    # randomly generated V and W with mean 0 and standard deviation 1/sqrt(m)
+        if not is_test:
+            self.W, self.V, self.AW, self.AV, self.Anum, self.trounds = self.FastMIML_train(train_data, train_targets, self.W, self.V, self.costs, self.norm_up, self.step_size, self.num_sub, self.AW, self.AV, self.Anum, self.trounds, self.lambda_reg, opts)
+        
+        ## test
+        _, test_labels = self.FastMIML_test(test_data, self.AW/self.Anum, self.AV/self.Anum, self.num_sub)
+            
+        accuracy, precision, recall, f1 = compute_metrics(test_labels, test_targets)
+        
+        return accuracy, precision, recall, f1
+            
+    def run(self, trainset, testset):
+        trainloader = DataLoader(trainset, batch_size=20, shuffle=True, pin_memory=True)
+        testloader = DataLoader(testset, batch_size=20, shuffle=True, pin_memory=True)
+        
+        for _ in range(self.epoch):
+            print(f"Train Epoch: {_}")
+            for inputs, labels in trainloader:
+                labels = labels.reshape(labels.shape[0], -1)
+                accuracy, precision, recall, f1 = self.train(inputs, labels)
+                print(f'Accuracy: {accuracy} - Precision: {precision} - Recall: {recall} - F1: {f1}')
+                
+            print(f"Test Epoch: {_}")
+            for inputs, labels in testloader:
+                labels = labels.reshape(labels.shape[0], -1)
+                accuracy, precision, recall, f1 = self.train(inputs, labels, True)
+                print(f'Accuracy: {accuracy} - Precision: {precision} - Recall: {recall} - F1: {f1}')

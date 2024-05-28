@@ -30,10 +30,6 @@ def main():
     config = load_config(args.config_path)
     extractor = build_extractor(config, custom_weights=True)
     
-    if args.test_extractor:    
-        extractor.print_summary()
-        extractor.benchmark('datasets/ILSVRC2012_img_val/', 5, 32)
-            
     miml_method = build_method(config, extractor)
     milnet = MILNet(miml_method, extractor)
     milnet.train_model(config.trainset_path, config.testset_path)

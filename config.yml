@@ -1,17 +1,17 @@
 using_extractor: "dino" #  Which feature extractor [simclr_v2, dino, plip, None] 
-method: "cknn" # Which miml method to use [brknn, cknn, dsmil, fastmiml, milr, misvm, mlknn]
+method: "mlknn" # Which miml method to use [brknn, cknn, dsmil, fastmiml, milr, misvm, mlknn]
 trainset_path: "datasets/diffinfinite_tr1/"
 testset_path: "datasets/diffinfinite_tr2/"
 checkpoint_path: "checkpoints/"
 
-extractors:  
+extractors:
   simclr_v2:
       version_id: "r101_1x_sk0"
       num_labels: 1000
       versions:
         r50_1x_sk0:
           dimensionality: 100
-        r101_1x_sk0: 
+        r101_1x_sk0:
           dimensionality: 100
 
   dino:
@@ -25,13 +25,13 @@ extractors:
           dimensionality: 2048
           avgpool_patchtokens: False
           n_last_blocks: 4
-          
-        vit_base: 
+
+        vit_base:
           dimensionality: 768
           avgpool_patchtokens: True
           n_last_blocks: 1
 
-        vit_small: 
+        vit_small:
           dimensionality: 384
           avgpool_patchtokens: False
           n_last_blocks: 4
@@ -41,12 +41,12 @@ extractors:
       versions:
         vinid/plip:
           dimensionality: 384
-  
+
 
 miml_methods:
   brknn:
       k: 5
-      epoch: 15
+      epoch: 40
   cknn:
       epoch: 5
       folds: 10
@@ -56,7 +56,7 @@ miml_methods:
       weight_decay: 0.00005
       num_workers: 10
       num_classes: 5
-      loss: "focal" #BCE or focal
+      loss: "BCE" #BCE or focal
   fastmiml:
       D: 100
       norm_up: 10
@@ -64,12 +64,13 @@ miml_methods:
       step_size: 0.005
       lambda_reg: 0.00001
       num_sub: 5
+      epoch: 10
   milr:
   MISVM:
     restarts: 0
     max_iters: 50
-    epoch: 10
+    epoch: 40
     C: 1
     kernel: "linear"
   mlknn:
-      epoch: 10
+      epoch: 40

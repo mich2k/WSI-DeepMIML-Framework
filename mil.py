@@ -11,8 +11,8 @@ class MILNet():
     def train_model(self, train_path: str, test_path: str): 
          
         # Load dataset
-        trainset = DiffInfiniteDataset(train_path, stop_at=10)
-        testset = DiffInfiniteDataset(test_path, stop_at=10)
+        trainset = DiffInfiniteDataset(train_path)
+        testset = DiffInfiniteDataset(test_path)
                 
         self.model.run(trainset, testset)
         

@@ -187,9 +187,10 @@ class MISVM(SIL, Baseline):
         return super_args
     
     def run(self, train_set, test_set):
-        train_loader = DataLoader(train_set, batch_size=15, shuffle=True)
-        test_loader = DataLoader(test_set, batch_size=15, shuffle=True)
+        train_loader = DataLoader(train_set, batch_size=20, shuffle=True)
+        test_loader = DataLoader(test_set, batch_size=20, shuffle=True)
         for _ in range(self.epoch):
+            print(f"Train Epoch: {_}")
             for X, y in train_loader:
                 X, y = binary_relevance_transformation(X, y, nested_array=False)
                 train_bags, test_bags, train_labels, test_labels = train_test_split(X, y, test_size=0.33, random_state=42)
@@ -197,10 +198,10 @@ class MISVM(SIL, Baseline):
                 test_bags = test_bags.reshape(test_bags.shape[0], -1)
                 self.fit(train_bags, train_labels)
                 predictions = self.predict(test_bags)
-                
                 accuracy, precision, recall, f1 = compute_metrics(predictions, test_labels)
                 print(f"Accuracy: {100*accuracy}, Precision: {precision}, Recall: {recall}, F1: {f1}")
                 
+            print(f"Test Epoch: {_}")    
             for X, y in test_loader:
                 X, y = binary_relevance_transformation(X, y, nested_array=False)
                 _, test_bags, _, test_labels = train_test_split(X, y, test_size=0.66, random_state=42)
