@@ -1,12 +1,12 @@
 using_extractor: "dino" #  Which feature extractor [simclr_v2, dino, plip, None] 
-method: "mlknn" # Which miml method to use [brknn, cknn, dsmil, fastmiml, milr, misvm, mlknn]
+method: "milr" # Which miml method to use [brknn, cknn, dsmil, fastmiml, milr, misvm, mlknn]
 trainset_path: "datasets/diffinfinite_tr1/"
 testset_path: "datasets/diffinfinite_tr2/"
 checkpoint_path: "checkpoints/"
 
 extractors:
   simclr_v2:
-      version_id: "r101_1x_sk0"
+      version_id: "r50_1x_sk0"
       num_labels: 1000
       versions:
         r50_1x_sk0:
@@ -35,12 +35,6 @@ extractors:
           dimensionality: 384
           avgpool_patchtokens: False
           n_last_blocks: 4
-  plip:
-      version_id: "vinid/plip"
-      auth_token: None
-      versions:
-        vinid/plip:
-          dimensionality: 384
 
 
 miml_methods:
@@ -66,7 +60,9 @@ miml_methods:
       num_sub: 5
       epoch: 10
   milr:
-  MISVM:
+    epoch: 40
+    lr: 0.000001
+  misvm:
     restarts: 0
     max_iters: 50
     epoch: 40

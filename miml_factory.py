@@ -15,7 +15,7 @@ def build_method(config, extractor):
         'cknn': CitationKNN,
         'fastmiml': FastMIML,
         'milr': MILR,
-        'MISVM': MISVM,
+        'misvm': MISVM,
         'mlknn': MLkNN
     }
     
@@ -26,8 +26,6 @@ def build_method(config, extractor):
     # !!
     if config.method == 'dsmil':
         return method_factory[config.method](extractor, config.miml_methods[config.method])
-    if config.method == 'misvm':
-        return method_factory[config.method](config.miml_methods[config.method], config.miml_methods[config.method].C, config.miml_methods[config.method].kernel)
-
+    
     
     return method_factory[config.method](config.miml_methods[config.method])

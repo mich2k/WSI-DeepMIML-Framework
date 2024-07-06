@@ -9,7 +9,7 @@ from methods.baseline import Baseline
 from methods.MI.MILR.utils import logsumexp_safe, generalized_mean
 from methods.MI.MILR.utils import make_dataset_from_dataframe
 from sklearn.preprocessing import StandardScaler
-from utils import binary_relevance_transformation
+from utils import binary_relevance_transformation, compute_metrics
 from pprint import pprint
 torch.manual_seed(1)
 
@@ -25,6 +25,10 @@ class MILR(nn.Module, Baseline):
         Baseline.__init__(self, is_pytorch_model=True)
         self.linear = None
         self.bag_fn = None
+        self.loss_function = None
+        self.optimizer = None
+        self.epoch = config.epoch
+        self.lr = config.lr
 
     def _predict_instance(self, X):
         return torch.sigmoid(self.linear(X))
@@ -80,9 +84,7 @@ class MILR(nn.Module, Baseline):
         X: np.ndarray,
         y: np.ndarray,
         bags: list[np.ndarray],
-        epochs=10,
         optimizer=None,
-        lr=1e-4,
         bag_fn="max",
         softmax_parameter=None,
     ):
@@ -106,8 +108,10 @@ class MILR(nn.Module, Baseline):
         padding_value = X.shape[0]
 
         bags, bags_mask = self._process_bags(bags, padding_value)
-
-        self.linear = torch.nn.Linear(X.shape[1], 1)
+        
+        
+        if self.linear is None:
+            self.linear = torch.nn.Linear(X.shape[1], 1)
 
         if bag_fn in PARAMETERIZED_BAG_FUNCTIONS:
             if softmax_parameter is None:
@@ -116,36 +120,38 @@ class MILR(nn.Module, Baseline):
                 )
             else:
                 self.register_parameter("softmax_parameter", softmax_parameter)
+        
+        if self.loss_function is None:
+            self.loss_function = nn.NLLLoss()
 
-        loss_function = nn.NLLLoss()
-
-        if optimizer is None:
-            optimizer = optim.AdamW(self.parameters(), lr=lr, weight_decay=1e-5)
-
+        if self.optimizer is None:
+            self.optimizer = optim.AdamW(self.parameters(), lr=self.lr, weight_decay=1e-5)
+    
+        
+        
         self.metrics = []
-        for _ in range(epochs):
-            self.zero_grad()
-            
-            log_probs = self(X, bags, bags_mask, bag_fn)
-            
-            loss = loss_function(log_probs, y)
-            
-            loss.backward()
-            
-            optimizer.step()
-
-            if loss.isnan():
-                raise ValueError("Loss is NaN.")
-
-            self.metrics.append(
-                {
-                    "loss": loss.item(),
-                    "accuracy": (torch.argmax(log_probs, axis=1) == y)
-                    .float()
-                    .mean()
-                    .item(),
-                }
-            )
+        self.zero_grad()
+        
+        log_probs = self(X, bags, bags_mask, bag_fn)
+        
+        loss = self.loss_function(log_probs, y)
+        
+        loss.backward()
+        
+        self.optimizer.step()
+        
+        if loss.isnan():
+            raise ValueError("Loss is NaN.")
+        
+        self.metrics.append(
+            {
+                "loss": loss.item(),
+                "accuracy": (torch.argmax(log_probs, axis=1) == y)
+                .float()
+                .mean()
+                .item(),
+            }
+        )
 
     def predict(self, X: np.ndarray, bags: list[np.ndarray]) -> np.ndarray:
         """Predicts the class of the bags.
@@ -221,30 +227,22 @@ class MILR(nn.Module, Baseline):
     
     def print_results(self, res):
         pprint(res)
-    
-    def run(self, trainset, testset):
         
-        X, y = trainset.get_data()
-        X, y, bags = binary_relevance_transformation(X, y, nested_array=False, get_bags=True)
-        X = X.reshape(X.shape[0], -1)
-        scaler = StandardScaler().fit(X)
-        X = scaler.transform(X)
-        
-        kf = KFold(n_splits=5, shuffle=True, random_state=42)
-        res = []
-        for bag_fn in ['max', 'product' ,'logsumexp', 'likelihood_ratio']:
-            print(bag_fn)
+    def train(self, X, y, bags, bag_fn, kf, res, test_mode = False):
+     
+        for _ in range(self.epoch):
             y_true = []
             y_pred = []
             y_prob = []
             for train, test in kf.split(bags):
                 bags_train = [bags[i] for i in train]
                 bags_test = [bags[i] for i in test]
-                self.fit(X, y[train], bags_train, epochs=100, lr=1e-6, bag_fn=bag_fn)
+                if not test_mode:
+                    self.fit(X, y[train], bags_train, bag_fn=bag_fn)
                 y_true.append(y[test])
                 y_pred.append(self.predict(X, bags_test))
                 y_prob.append(self.predict_proba(X, bags_test)[:, 1])
-
+            
             y_pred = np.concatenate(y_pred)
             y_true = np.concatenate(y_true)
             y_prob = np.concatenate(y_prob)
@@ -252,6 +250,37 @@ class MILR(nn.Module, Baseline):
             this_report['auc'] = roc_auc_score(y_true, y_prob)
             this_report.update(classification_report(y_true, y_pred, output_dict=True, zero_division=0))
             res.append(this_report)
+            accuracy, precision, recall, f1 = compute_metrics(y_true, y_pred)
+            print(f"Epoch: {_}, Accuracy: {accuracy}, Precision: {precision}, Recall: {recall}, F1: {f1}")
+    
+    
+    def run(self, trainset, testset):
         
-        self.print_results(res)    
+        X, y = trainset.get_data()
+        X_test, y_test = testset.get_data()
+        
+        X, y, bags = binary_relevance_transformation(X, y, nested_array=False, get_bags=True)
+        X_test, y_test, bags_test = binary_relevance_transformation(X_test, y_test, nested_array=False, get_bags=True)
+        
+        X = X.reshape(X.shape[0], -1)
+        X_test = X_test.reshape(X_test.shape[0], -1)
+        
+        scaler = StandardScaler().fit(X)
+        X = scaler.transform(X)
+        
+        scaler_test = StandardScaler().fit(X_test)
+        X_test = scaler_test.transform(X_test)
+        
+        kf = KFold(n_splits=10, shuffle=True, random_state=42)
+        self.to(self.device)
+        res = []
+        for bag_fn in ['max', 'product' ,'logsumexp', 'likelihood_ratio']:
+            print(bag_fn)
+            print("Training...")
+            self.train(X, y, bags, bag_fn, kf, res)
+            
+            print("Testing...")
+            self.train(X_test, y_test, bags_test, bag_fn, kf, res, test_mode=True)
+        
+        #self.print_results(res)    
     
