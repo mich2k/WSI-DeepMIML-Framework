@@ -200,7 +200,7 @@ class MISVM(SIL, Baseline):
                 predictions = self.predict(test_bags)
                 accuracy, precision, recall, f1 = compute_metrics(predictions, test_labels)
                 print(f"Accuracy: {100*accuracy}, Precision: {precision}, Recall: {recall}, F1: {f1}")
-                
+        for _ in range(self.epoch):        
             print(f"Test Epoch: {_}")    
             for X, y in test_loader:
                 X, y = binary_relevance_transformation(X, y, nested_array=False)

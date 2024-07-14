@@ -14,6 +14,13 @@ from tqdm import tqdm
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 
 
+import os
+import numpy as np
+import pandas as pd
+from tqdm import tqdm
+from PIL import Image
+from torch.utils.data import Dataset
+
 class DiffInfiniteDataset(Dataset):
     def __init__(self, data_path, use_strategy=True, stop_at=0):
         self.labels = []
@@ -21,11 +28,8 @@ class DiffInfiniteDataset(Dataset):
         
         self.labels_csv = pd.read_csv(data_path + "annotator.csv")
         data_path = data_path + "patched_presplit_out/patches/"
-        # Load Images
-        # 1. for each subfolders
-        # 2. for each images in each subfolder
-        # 3. add image to images list
         
+        # Load Images
         for folder in tqdm(os.listdir(data_path)):
             if len(self.images) == stop_at and stop_at != 0:
                 break
@@ -36,45 +40,43 @@ class DiffInfiniteDataset(Dataset):
                 if len(self.images) == stop_at and stop_at != 0:
                     break
                 
-                
                 image_path = os.path.join(data_path, folder, image_name)
                 
                 image = Image.open(image_path)
                 image = np.array(image)
-                image = image.reshape(image.shape[2], image.shape[0], image.shape[1])                
+                image = image.reshape(image.shape[2], image.shape[0], image.shape[1])
                 
                 bag.append(image)
                 
-            self.images.append(np.array(bag))
+            if bag:  # Ensure the bag is not empty
+                self.images.append(np.array(bag))
             
         # Load labels from csv file
-        # if use_strategy is False use Unknown, Carcinoma, Necrosis, Tumor_Stroma, Others columns
-        # Otherwise, ABS_Unknown, ABS_Carcinoma, ABS_Necrosis, ABS_Tumor_Stroma, ABS_Others
-        
         labels_column = ['Unknown', 'Carcinoma', 'Necrosis', 'Tumor_Stroma', 'Others'] if not use_strategy else ['ABS_Unknown', 'ABS_Carcinoma', 'ABS_Necrosis', 'ABS_Tumor_Stroma', 'ABS_Others']
-
+        
         for index, row in self.labels_csv.iterrows():
-            l = []
             if len(self.labels) == stop_at and stop_at != 0:
-                    break
-                
-            l.append(list(row[labels_column]))
+                break
+            
+            l = list(row[labels_column])
             self.labels.append(np.array(l))
         
+        # Convert lists to numpy arrays
         self.images = np.array(self.images)
         self.labels = np.array(self.labels)
-            
+        
     def normalize(self):
-        self.images = self.images/255.0
+        self.images = np.array([bag / 255.0 for bag in self.images])
         
     def __len__(self):
-        return self.images.shape[0]
+        return len(self.images)
     
     def __getitem__(self, index):
         return self.images[index], self.labels[index]
     
     def get_data(self):
-        return self.images, self.labels        
+        return self.images, self.labels
+   
         
 class MultiLabelDataset(Dataset): 
     def __init__(self, stop_at = 0):
@@ -195,9 +197,6 @@ def binary_relevance_transformation(images, labels, nested_array=True, get_bags 
         bags = []
         
         
-        #images (batch_size, bag_size, channels, height, width)
-        #labels (batch_size, num_classes)
-        
         batch_size = images.shape[0]
         labels = labels.reshape(batch_size, -1)
         
@@ -231,18 +230,25 @@ def binary_relevance_transformation(images, labels, nested_array=True, get_bags 
 
 def compute_metrics(pred, target):
     
+    
+    pred = torch.sigmoid(pred)
+
+    
     # Check if it is a numpy array
     if isinstance(pred, torch.Tensor):
         pred = pred.cpu().detach().numpy()
         
     if isinstance(target, torch.Tensor):
         target = target.cpu().detach().numpy()
+        
+        
     
-    threshold = 0.7
+    threshold = 0.6
     
     # check if target has continous values or integers
     if 'float' not in target.dtype.name:
         pred = (pred > threshold).astype(int)
+        
             
     # Compute precision, recall, f1-score
     accuracy = accuracy_score(target, pred)

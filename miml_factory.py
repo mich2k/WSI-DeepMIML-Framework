@@ -5,11 +5,13 @@ from methods.ML.MLkNN.MLkNN import MLkNN
 from methods.MI.CitationKNN.citationknn import CitationKNN
 from methods.MI.MILR.milr import MILR
 from methods.MI.MISVM.mi_svm import MISVM
+from methods.MIML.dsmil.train_diffinfinite import OG_DSMIL
 
 
 def build_method(config, extractor):
     
     method_factory = {
+        'og_dsmil': OG_DSMIL,
         'dsmil': DSMIL,
         'brknn': BRkNN,
         'cknn': CitationKNN,

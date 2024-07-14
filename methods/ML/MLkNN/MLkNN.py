@@ -158,6 +158,7 @@ class MLkNN(Baseline, object):
             for inputs, labels in trainloader:
                 labels = labels.reshape(labels.shape[0], -1)
                 self.train(inputs, labels)
+        for _ in range(self.epoch):
             print("test")
             for inputs, labels in testloader:
                 labels = labels.reshape(labels.shape[0], -1)

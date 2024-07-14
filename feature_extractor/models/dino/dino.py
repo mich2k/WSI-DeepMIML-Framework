@@ -65,6 +65,5 @@ class DINO(FeatureExtractor):
             else:
                 output = self.model(x)
             
-            class_scores = self.linear_classifier(output)
             
-        return output, class_scores
+        return output

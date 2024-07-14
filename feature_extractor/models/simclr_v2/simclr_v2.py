@@ -11,7 +11,6 @@ class SimCLRv2(FeatureExtractor):
         super().__init__(data_path, checkpoint_path, versions, config.version_id, versions[config.version_id].dimensionality)
                            
         self.model, _ = get_resnet(*name_to_params(self.version.get_version_id()))
-        self.linear_classifier = self.model.fc
         self._load_weights(self.version)
         self.embed_dim = 2048
         self.num_labels = config.num_labels
@@ -24,8 +23,7 @@ class SimCLRv2(FeatureExtractor):
     
     def compute_features(self, x:torch.Tensor, eval=False):
         feats = self.model(x, apply_fc=False)
-        class_scores = self.linear_classifier(feats)
-        return feats, class_scores
+        return feats
 
     def bypass_backbone_fc(self):
         super().bypass_backbone_fc()

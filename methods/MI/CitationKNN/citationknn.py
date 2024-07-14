@@ -140,11 +140,11 @@ class CitationKNN(Baseline):
             print("Epoch: "+str(_))
             print("Training")
             for inputs, labels in trainloader:
-                #inputs = inputs.detach().numpy()
-                #labels = labels.detach().numpy()
+
                 inputs = inputs.reshape(inputs.shape[0], inputs.shape[1], -1)
                 labels = labels.reshape(labels.shape[0], -1)
                 self.train(inputs, labels)
+        for _ in range(self.epoch):
             print("Testing")
             for inputs, labels in testloader:
                 inputs = inputs.reshape(inputs.shape[0],inputs[1].shape, -1)

@@ -279,7 +279,7 @@ class FastMIML(Baseline):
                 labels = labels.reshape(labels.shape[0], -1)
                 accuracy, precision, recall, f1 = self.train(inputs, labels)
                 print(f'Accuracy: {accuracy} - Precision: {precision} - Recall: {recall} - F1: {f1}')
-                
+        for _ in range(self.epoch):        
             print(f"Test Epoch: {_}")
             for inputs, labels in testloader:
                 labels = labels.reshape(labels.shape[0], -1)

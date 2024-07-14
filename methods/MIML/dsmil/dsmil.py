@@ -14,7 +14,7 @@ class DSMIL(nn.Module, Baseline):
         nn.Module.__init__(self)
         Baseline.__init__(self, is_pytorch_model)
         self.bag_classifier = BagClassifier(extractor.embed_dim, config.num_classes, self.device)
-        self.linear = nn.Linear(extractor.num_labels, config.num_classes).to(self.device)
+        self.linear = nn.Linear(extractor.embed, config.num_classes).to(self.device)
         self.is_pytorch_model = is_pytorch_model
         self.num_epochs = config.n_epochs
         self.num_workers = config.num_workers
@@ -25,7 +25,7 @@ class DSMIL(nn.Module, Baseline):
 
         
     def forward(self, feats, class_scores):
-        class_scores = self.linear(class_scores)
+        self.linear(feats)
         return self.bag_classifier(feats, class_scores)
     
     
@@ -38,14 +38,14 @@ class DSMIL(nn.Module, Baseline):
                 
                 inputs = inputs.to(self.device)
                 labels = labels.to(self.device)
-                        
+                
+                self.optimizer.zero_grad()
+
                 if self.extractor is not None:
                     with torch.no_grad():
-                        feats, class_scores = self.extractor.compute_features(inputs.float())
-            
-                self.optimizer.zero_grad()
-            
-                predictions = self.forward(feats, class_scores)
+                        feats = self.extractor.compute_features(inputs.float())
+                                        
+                predictions = self.forward(feats)
                 
                 loss = self.criterion(predictions, labels.float())
                             
@@ -96,7 +96,7 @@ class DSMIL(nn.Module, Baseline):
             print(f"Train Epoch: {epoch}")
             self.train()
             
+        for epoch in range(self.num_epochs):
             print(f"Test Epoch: {epoch}")
             self.test()
-            
     

@@ -81,7 +81,7 @@ class BRkNN(Baseline):
             print(f"Train Epoch: {_}")
             for inputs, labels in trainloader:
                 self.train(inputs, labels)
-                
+        for _ in range(self.epoch):        
             print(f"Test Epoch: {_}")
             for inputs, labels in testloader:
                 self.test(inputs, labels)
