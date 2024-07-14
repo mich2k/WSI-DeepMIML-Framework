@@ -3,12 +3,10 @@ import torch
 import torch.nn as nn
 import numpy as np
 import os, json, datetime, glob, copy, sys
-from sklearn.metrics import roc_curve, roc_auc_score
+from sklearn.metrics import roc_curve, roc_auc_score, accuracy_score
 from torch.utils.data import DataLoader, random_split
 from methods.MIML.dsmil.focal_loss import FocalLoss
-
 from utils import DiffInfiniteDataset
-
 
 
 def print_save_message(config, save_name, thresholds_optimal):
@@ -49,7 +47,8 @@ def apply_sparse_init(m):
 
 
 def optimal_thresh(fpr, tpr, thresholds, p=0):
-    loss = (fpr - tpr) - p * tpr / (fpr + tpr + 1)
+    #loss = (fpr - tpr) - p * tpr / (fpr + tpr + 1)
+    loss = -tpr
     idx = np.argmin(loss, axis=0)
     return fpr[idx], tpr[idx], thresholds[idx]
             
@@ -71,6 +70,10 @@ def multi_label_roc(labels, predictions, num_classes, pos_label=1):
         
         label = label.flatten()
         prediction = prediction.flatten()
+        
+        #RocCurveDisplay.from_predictions(label, prediction)
+        #plt.show()
+
 
         fpr, tpr, threshold = roc_curve(label, prediction)
         fpr_optimal, tpr_optimal, threshold_optimal = optimal_thresh(fpr, tpr, threshold)
@@ -90,6 +93,9 @@ def multi_label_roc(labels, predictions, num_classes, pos_label=1):
         thresholds_optimal.append(threshold_optimal)
 
     return aucs, thresholds, thresholds_optimal         
+
+def get_malignat_tissue(target):
+    return np.any(target, axis=0)
 
 def train(trainloader, milnet: mil.MILNet, criterion, optimizer):
     milnet.train()
@@ -148,8 +154,6 @@ def test(config, testloader, milnet, criterion, thresholds=None, return_predicti
     test_predictions = []
     with torch.no_grad():
         for i, (bag, bag_label) in enumerate(testloader):
-            
-            
             
             feats_list = []
             classes_list = []
@@ -210,29 +214,45 @@ def test(config, testloader, milnet, criterion, thresholds=None, return_predicti
         test_labels = test_labels.reshape(-1, config.num_classes)
         test_predictions = test_predictions.reshape(-1, config.num_classes)
         
+        
         for i in range(config.num_classes):
             class_prediction_bag = copy.deepcopy(test_predictions[:, i])
             class_prediction_bag[test_predictions[:, i]>=thresholds_optimal[i]] = 1
             class_prediction_bag[test_predictions[:, i]<thresholds_optimal[i]] = 0
             test_predictions[:, i] = class_prediction_bag
+            
     bag_score = 0
-    test_excl = 0
-    test_excl_last = 0
-    test_excl_first_last = 0
+    score_without_first_label = 0
+    score_without_last_label = 0
+    score_without_first_last_labels = 0
+    tissue_malignant = []
+    tissue_predicted = []
+    
     
     for i in range(0, len(testloader)*config.batch_size):
         bag_score = np.array_equal(test_labels[i], test_predictions[i]) + bag_score
-        test_excl += np.array_equal(test_labels[i, 1:], test_predictions[i, 1:]) 
-        test_excl_last += np.array_equal(test_labels[i, :-1], test_predictions[i, :-1])
-        test_excl_first_last += np.array_equal(test_labels[i, 1:-1], test_predictions[i, 1:-1])
+        score_without_first_label += np.array_equal(test_labels[i, 1:], test_predictions[i, 1:]) 
+        score_without_last_label += np.array_equal(test_labels[i, :-1], test_predictions[i, :-1])
+        score_without_first_last_labels += np.array_equal(test_labels[i, 1:-1], test_predictions[i, 1:-1])
+        
+        tissue_malignant.append(get_malignat_tissue(test_labels[i, 1:-1]))
+        tissue_predicted.append(get_malignat_tissue(test_predictions[i, 1:-1]))
+    
+    
+
+    test = accuracy_score(tissue_malignant, tissue_predicted)
     
     avg_score = bag_score / (len(testloader)*config.batch_size)
-    test_excl = test_excl / (len(testloader)*config.batch_size)
-    test_excl_last = test_excl_last / (len(testloader)*config.batch_size)
-    test_excl_first_last = test_excl_first_last / (len(testloader)*config.batch_size)
+    score_without_first_label = score_without_first_label / (len(testloader)*config.batch_size)
+    score_without_last_label = score_without_last_label / (len(testloader)*config.batch_size)
+    score_without_first_last_labels = score_without_first_last_labels / (len(testloader)*config.batch_size)
     
-                
-    print(f"Average score without first class: {test_excl}, without last class: {test_excl_last}, without first and last class: {test_excl_first_last}")
+    # calcolare l'accuracy sulla base della PRESENZA O MENO di tessuto maligno all'interno delle patch
+    # 16,3 -> 16,1
+    # Ricorda di segnare le strategie nelle conclusioni
+
+    
+    print(f"Average score without first class: {score_without_first_label}, without last class: {score_without_last_label}, without first and last class: {score_without_first_last_labels}")
     
     if return_predictions:
         return total_loss / len(testloader), avg_score, auc_value, thresholds_optimal, test_predictions, test_labels
@@ -254,8 +274,8 @@ class OG_DSMIL():
         # Split testset into test and validation
         testset, validationset = random_split(testset, [int(0.7*len(testset)), len(testset)-int(0.7*len(testset))])
         
-        validationloader = DataLoader(validationset, batch_size=self.config.batch_size, shuffle=False, pin_memory=True, num_workers=self.config.num_workers)
-        testloader = DataLoader(testset, batch_size=self.config.batch_size, shuffle=False, pin_memory=True, num_workers=self.config.num_workers)
+        validationloader = DataLoader(validationset, batch_size=self.config.batch_size, shuffle=True, pin_memory=True, num_workers=self.config.num_workers)
+        testloader = DataLoader(testset, batch_size=self.config.batch_size, shuffle=True, pin_memory=True, num_workers=self.config.num_workers)
         
         
         i_classifier = mil.IClassifier(feature_extractor, feature_size=self.config.feats_size, output_class=self.config.num_classes).cuda()
