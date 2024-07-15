@@ -1,6 +1,6 @@
 from methods.baseline import Baseline
 from feature_extractor.extractor.extractor import FeatureExtractor
-from utils import DiffInfiniteDataset
+from utils import DiffInfiniteDataset, MultiLabelDataset
 
 class MILWrapper():
     def __init__(self, name: str, method: Baseline, extractor: FeatureExtractor):
@@ -10,6 +10,7 @@ class MILWrapper():
         self.extractor = extractor
     
     def train_model(self, train_path: str, test_path: str): 
+        
          
         if 'diffinfinite' in train_path:
             trainset = DiffInfiniteDataset(train_path, stop_at=500)

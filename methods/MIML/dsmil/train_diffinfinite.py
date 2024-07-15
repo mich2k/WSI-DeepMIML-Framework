@@ -240,19 +240,15 @@ def test(config, testloader, milnet, criterion, thresholds=None, return_predicti
     
     
 
-    test = accuracy_score(tissue_malignant, tissue_predicted)
+    avg_tissue_score = accuracy_score(tissue_malignant, tissue_predicted)
     
     avg_score = bag_score / (len(testloader)*config.batch_size)
     score_without_first_label = score_without_first_label / (len(testloader)*config.batch_size)
     score_without_last_label = score_without_last_label / (len(testloader)*config.batch_size)
     score_without_first_last_labels = score_without_first_last_labels / (len(testloader)*config.batch_size)
     
-    # calcolare l'accuracy sulla base della PRESENZA O MENO di tessuto maligno all'interno delle patch
-    # 16,3 -> 16,1
-    # Ricorda di segnare le strategie nelle conclusioni
-
     
-    print(f"Average score without first class: {score_without_first_label}, without last class: {score_without_last_label}, without first and last class: {score_without_first_last_labels}")
+    print(f"Average score without first class: {score_without_first_label}, without last class: {score_without_last_label}, without first and last class: {score_without_first_last_labels}, average tissue score: {avg_tissue_score}")
     
     if return_predictions:
         return total_loss / len(testloader), avg_score, auc_value, thresholds_optimal, test_predictions, test_labels
