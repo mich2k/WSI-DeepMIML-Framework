@@ -241,13 +241,21 @@ def compute_metrics(pred, target):
     if isinstance(target, torch.Tensor):
         target = target.cpu().detach().numpy()
         
+    """Class 0: Mean AUC = 0.8818
+        Class 1: Mean AUC = 0.8602
+        Class 2: Mean AUC = 0.8860
+        Class 3: Mean AUC = 0.8739
+        Class 4: Mean AUC = 0.8932
+        """
         
+    thresholds = [0.8818, 0.8602, 0.8860, 0.8739, 0.8932]
     
-    threshold = 0.6
-    
-    # check if target has continous values or integers
+    # check if target has continous values or integers 
     if 'float' not in target.dtype.name:
-        pred = (pred > threshold).astype(int)
+        # apply thresholds to each pred class
+        for i in range(len(pred)):
+            pred[i] = pred[i] > thresholds[i]
+
         
             
     # Compute precision, recall, f1-score

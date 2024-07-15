@@ -1,5 +1,5 @@
-using_extractor: "simclr_v2" #  Which feature extractor [simclr_v2, dino, plip, None] 
-method: "og_dsmil" # Which miml method to use [brknn, cknn, dsmil, fastmiml, milr, misvm, mlknn]
+using_extractor: "dino" #  Which feature extractor [simclr_v2, dino, plip, None] 
+method: "mlknn" # Which miml method to use [brknn, cknn, dsmil, fastmiml, milr, misvm, mlknn]
 trainset_path: "datasets/diffinfinite_tr1/"
 testset_path: "datasets/diffinfinite_tr2/"
 checkpoint_path: "checkpoints/"
@@ -50,11 +50,10 @@ miml_methods:
       weight_decay: 0.00005
       num_workers: 10
       num_classes: 5
-      loss: "BCE" #BCE or focal
+      loss: "focal" #BCE or focal
 
   og_dsmil:
       batch_size: 10
-      feats_size: 2048
       lr: 0.0001
       num_epochs: 40
       weight_decay: 0.0001
@@ -85,4 +84,4 @@ miml_methods:
     C: 1
     kernel: "linear"
   mlknn:
-      epoch: 40
+      epoch: 20

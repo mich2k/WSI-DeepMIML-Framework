@@ -70,9 +70,6 @@ def multi_label_roc(labels, predictions, num_classes, pos_label=1):
         
         label = label.flatten()
         prediction = prediction.flatten()
-        
-        #RocCurveDisplay.from_predictions(label, prediction)
-        #plt.show()
 
 
         fpr, tpr, threshold = roc_curve(label, prediction)
@@ -274,8 +271,8 @@ class OG_DSMIL():
         testloader = DataLoader(testset, batch_size=self.config.batch_size, shuffle=True, pin_memory=True, num_workers=self.config.num_workers)
         
         
-        i_classifier = mil.IClassifier(feature_extractor, feature_size=self.config.feats_size, output_class=self.config.num_classes).cuda()
-        b_classifier = mil.BClassifier(input_size=self.config.feats_size, output_class=self.config.num_classes, dropout_v=self.config.dropout_node, nonlinear=self.config.non_linearity).cuda()
+        i_classifier = mil.IClassifier(feature_extractor, feature_size=feature_extractor.embed_dim, output_class=self.config.num_classes).cuda()
+        b_classifier = mil.BClassifier(input_size=feature_extractor.embed_dim, output_class=self.config.num_classes, dropout_v=self.config.dropout_node, nonlinear=self.config.non_linearity).cuda()
         milnet = mil.MILNet(i_classifier, b_classifier).cuda()
         milnet.apply(lambda m: apply_sparse_init(m))
         criterion = nn.BCEWithLogitsLoss() if self.config.loss == 'BCE' else FocalLoss()

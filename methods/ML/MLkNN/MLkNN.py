@@ -13,6 +13,7 @@ import methods.ML.MLkNN.evaluate as ev
 from   methods.ML.MLkNN.knn import *
 from torch.utils.data import DataLoader
 from utils import compute_metrics
+import torch
  
     
 class MLkNN(Baseline, object):
@@ -147,21 +148,35 @@ class MLkNN(Baseline, object):
             labels = self.predict(val_X)
             self.evaluate(val_Y)
 
-    def run(self, trainset, testset):
+    def run(self, trainset, testset, feature_extractor):
         
         trainloader = DataLoader(trainset, batch_size=20, shuffle=True, pin_memory=True)
         testloader = DataLoader(testset, batch_size=20, shuffle=True, pin_memory=True)
         
-        for _ in range(self.epoch):
-            print("epoch: ", _)
-            print("train")
-            for inputs, labels in trainloader:
-                labels = labels.reshape(labels.shape[0], -1)
-                self.train(inputs, labels)
-        for _ in range(self.epoch):
-            print("test")
-            for inputs, labels in testloader:
-                labels = labels.reshape(labels.shape[0], -1)
-                self.test(inputs, labels)
+        for iteration in range(5):
+            print("iteration: ", iteration)
+            for _ in range(self.epoch):
+                print("train epoch: ", _)
+                for inputs, labels in trainloader:
+                    input_list = []
+                    for i in range(len(inputs)):
+                        input_list.append(feature_extractor.compute_features(inputs[i].float().cuda()).cpu())
+
+                    input_arr = np.vstack(input_list)
+                    input_feats = input_arr.reshape(inputs.shape[0], inputs.shape[1], -1)
+                    labels = labels.reshape(labels.shape[0], -1)
+                    self.train(input_feats, labels)
+
+            for _ in range(self.epoch):
+                print("test epoch: ", _)
+                for inputs, labels in testloader:
+                    input_list = []
+                    for i in range(len(inputs)):
+                        input_list.append(feature_extractor.compute_features(inputs[i].float().cuda()).cpu())
+
+                    input_arr = np.vstack(input_list)
+                    input_feats = input_arr.reshape(inputs.shape[0], inputs.shape[1], -1)
+                    labels = labels.reshape(labels.shape[0], -1)
+                    self.test(inputs, labels)
         
         

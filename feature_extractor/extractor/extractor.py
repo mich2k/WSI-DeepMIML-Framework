@@ -37,7 +37,6 @@ class FeatureExtractor():
     def __init__(self, dataloader, checkpoint_path, versions_dict:dict, version_id, out_fc_dimensionality):
         self.model = None
         self.device = get_device()
-
         self.checkpoint_path = checkpoint_path
 
         self.versions:Version = []

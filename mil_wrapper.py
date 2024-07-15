@@ -1,7 +1,6 @@
 from methods.baseline import Baseline
 from feature_extractor.extractor.extractor import FeatureExtractor
-from utils import DiffInfiniteDataset, MultiLabelDataset
-
+from utils import DiffInfiniteDataset
 class MILWrapper():
     def __init__(self, name: str, method: Baseline, extractor: FeatureExtractor):
         super().__init__()
@@ -13,13 +12,13 @@ class MILWrapper():
         
          
         if 'diffinfinite' in train_path:
-            trainset = DiffInfiniteDataset(train_path, stop_at=500)
+            trainset = DiffInfiniteDataset(train_path, stop_at=800)
 
         if 'diffinfinite' in test_path:
-            testset = DiffInfiniteDataset(test_path, stop_at=300)
+            testset = DiffInfiniteDataset(test_path, stop_at=800)
                 
         #if model is DSMIL we need to pass the extractor
-        if self.name == 'og_dsmil':
+        if self.name == 'og_dsmil' or self.name == 'dsmil' or self.name == 'mlknn':
             self.model.run(trainset, testset, self.extractor)
         else:
             self.model.run(trainset, testset)
