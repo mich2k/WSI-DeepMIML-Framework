@@ -37,7 +37,7 @@ class MILR(nn.Module, Baseline):
         self.bag_fn = bag_fn
 
         instance_probs = self._predict_instance(X)
-        bagged_instance_probs = instance_probs[bags].squeeze()
+        bagged_instance_probs = instance_probs[bags].squeeze(-1)
 
         if bag_fn in PARAMETERIZED_BAG_FUNCTIONS:
             # todo: improve how the parameter is constrained
@@ -228,7 +228,7 @@ class MILR(nn.Module, Baseline):
     def print_results(self, res):
         pprint(res)
         
-    def train(self, X, y, bags, bag_fn, kf, res, test_mode = False):
+    def train_folds(self, X, y, bags, bag_fn, kf, res, test_mode = False):
      
         for _ in range(self.epoch):
             y_true = []
@@ -250,7 +250,7 @@ class MILR(nn.Module, Baseline):
             this_report['auc'] = roc_auc_score(y_true, y_prob)
             this_report.update(classification_report(y_true, y_pred, output_dict=True, zero_division=0))
             res.append(this_report)
-            accuracy, precision, recall, f1 = compute_metrics(y_true, y_pred)
+            accuracy, precision, recall, f1 = compute_metrics(y_pred, y_true)
             print(f"Epoch: {_}, Accuracy: {accuracy}, Precision: {precision}, Recall: {recall}, F1: {f1}")
     
     
@@ -267,20 +267,18 @@ class MILR(nn.Module, Baseline):
         
         scaler = StandardScaler().fit(X)
         X = scaler.transform(X)
-        
-        scaler_test = StandardScaler().fit(X_test)
-        X_test = scaler_test.transform(X_test)
-        
+        X_test = scaler.transform(X_test)
+
         kf = KFold(n_splits=10, shuffle=True, random_state=42)
         self.to(self.device)
         res = []
         for bag_fn in ['max', 'product' ,'logsumexp', 'likelihood_ratio']:
             print(bag_fn)
             print("Training...")
-            self.train(X, y, bags, bag_fn, kf, res)
-            
+            self.train_folds(X, y, bags, bag_fn, kf, res)
+
             print("Testing...")
-            self.train(X_test, y_test, bags_test, bag_fn, kf, res, test_mode=True)
+            self.train_folds(X_test, y_test, bags_test, bag_fn, kf, res, test_mode=True)
         
         #self.print_results(res)    
     

@@ -14,7 +14,7 @@ class DSMIL(nn.Module, Baseline):
         nn.Module.__init__(self)
         Baseline.__init__(self, is_pytorch_model)
         self.bag_classifier = BagClassifier(extractor.embed_dim, config.num_classes, self.device)
-        self.linear = nn.Linear(extractor.embed, config.num_classes).to(self.device)
+        self.linear = nn.Linear(extractor.embed_dim, config.num_classes).to(self.device)
         self.is_pytorch_model = is_pytorch_model
         self.num_epochs = config.n_epochs
         self.num_workers = config.num_workers
@@ -24,61 +24,66 @@ class DSMIL(nn.Module, Baseline):
         self.loss = config.loss
 
         
-    def forward(self, feats, class_scores):
-        self.linear(feats)
-        return self.bag_classifier(feats, class_scores)
-    
-    
-    def train(self):
-        
+    def forward(self, feats):
+        class_scores = self.linear(feats)
+        return class_scores, self.bag_classifier(feats, class_scores)
+
+
+    def train_epoch(self):
+
         for i, (inputs, labels) in enumerate(self.trainloader):
-                
+
                 inputs = inputs.squeeze(0)
                 labels = labels.squeeze(0)
-                
+
                 inputs = inputs.to(self.device)
                 labels = labels.to(self.device)
-                
+
                 self.optimizer.zero_grad()
 
                 if self.extractor is not None:
                     with torch.no_grad():
                         feats = self.extractor.compute_features(inputs.float())
-                                        
-                predictions = self.forward(feats)
-                
-                loss = self.criterion(predictions, labels.float())
-                            
+
+                class_scores, predictions = self.forward(feats)
+                predictions = predictions.squeeze(0)
+                max_prediction, _ = torch.max(class_scores, 0)
+
+                loss = 0.5*self.criterion(predictions, labels.float()) + 0.5*self.criterion(max_prediction, labels.float())
+
                 loss.backward()
-            
+
                 self.optimizer.step()
-                
+
                 accuracy, precision, recall, f1 = compute_metrics(predictions, labels)
-                
+
                 print(f"Iteration {i} - Accurarcy: {accuracy} - {self.loss} Loss: {loss.item()} - Precision: {precision} - Recall: {recall} - F1: {f1}")
-            
-    def test(self):
-                
+
+    def test_epoch(self):
+
         for i, (inputs, labels) in enumerate(self.testloader):
-                
+
             inputs = inputs.squeeze(0)
             labels = labels.squeeze(0)
-                
+
             inputs = inputs.to(self.device)
             labels = labels.to(self.device)
-                        
+
             if self.extractor is not None:
                 with torch.no_grad():
-                    feats, class_scores = self.extractor.compute_features(inputs.float())
-            
-            predictions = self.forward(feats, class_scores)
-            
-            loss = self.criterion(predictions, labels.float())
-            
+                    feats = self.extractor.compute_features(inputs.float())
+
+            with torch.no_grad():
+                class_scores, predictions = self.forward(feats)
+                predictions = predictions.squeeze(0)
+                max_prediction, _ = torch.max(class_scores, 0)
+
+            loss = 0.5*self.criterion(predictions, labels.float()) + 0.5*self.criterion(max_prediction, labels.float())
+
             accuracy, precision, recall, f1 = compute_metrics(predictions, labels)
-                
+
             print(f"Iteration {i} - Accurarcy: {accuracy} - {self.loss} Loss: {loss.item()} - Precision: {precision} - Recall: {recall} - F1: {f1}")
-            
+
     def run(self, trainset, testset):
         
         self.trainloader = DataLoader(trainset, batch_size=1, shuffle=True, pin_memory=True, num_workers=self.num_workers)
@@ -95,8 +100,10 @@ class DSMIL(nn.Module, Baseline):
         for epoch in range(self.num_epochs):
             print(f"Train Epoch: {epoch}")
             self.train()
-            
+            self.train_epoch()
+
+        self.eval()
         for epoch in range(self.num_epochs):
             print(f"Test Epoch: {epoch}")
-            self.test()
+            self.test_epoch()
     

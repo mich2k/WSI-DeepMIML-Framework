@@ -17,7 +17,7 @@ def convalidate_args(args):
 
 def main():
     parser = argparse.ArgumentParser(description='Inference DeepMIML method on MIL datasets exploting DiffInfinite')
-    parser.add_argument('--test_extractor', default=False, type=bool, help='Test the model')
+    parser.add_argument('--test_extractor', default=False, action='store_true', help='Test the model')
     parser.add_argument('--config_path', default='config.yml', type=str, help='deepmiml-fw config filepath')
 
     args = parser.parse_args()

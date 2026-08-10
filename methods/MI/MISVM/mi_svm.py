@@ -197,16 +197,16 @@ class MISVM(SIL, Baseline):
                 train_bags = train_bags.reshape(train_bags.shape[0], -1)
                 test_bags = test_bags.reshape(test_bags.shape[0], -1)
                 self.fit(train_bags, train_labels)
-                predictions = self.predict(test_bags)
+                predictions = (self.predict(test_bags) > 0).astype(int)
                 accuracy, precision, recall, f1 = compute_metrics(predictions, test_labels)
                 print(f"Accuracy: {100*accuracy}, Precision: {precision}, Recall: {recall}, F1: {f1}")
-        for _ in range(self.epoch):        
-            print(f"Test Epoch: {_}")    
+        for _ in range(self.epoch):
+            print(f"Test Epoch: {_}")
             for X, y in test_loader:
                 X, y = binary_relevance_transformation(X, y, nested_array=False)
                 _, test_bags, _, test_labels = train_test_split(X, y, test_size=0.66, random_state=42)
                 test_bags = test_bags.reshape(test_bags.shape[0], -1)
-                predictions = self.predict(test_bags)
+                predictions = (self.predict(test_bags) > 0).astype(int)
                 accuracy, precision, recall, f1 = compute_metrics(predictions, test_labels)
                 print(f"Accuracy: {100*accuracy}, Precision: {precision}, Recall: {recall}, F1: {f1}")
 
@@ -334,12 +334,11 @@ class miSVM(SIL, Baseline):
         return super_args
     
     def run(self, X, y):
-        X, y = binary_relevance_transformation(X, y, nested_array=False, bag_shape=10)
+        X, y = binary_relevance_transformation(X, y, nested_array=False)
         train_bags, test_bags, train_labels, test_labels = train_test_split(X, y, test_size=0.33, random_state=42)
         self.fit(train_bags, train_labels)
-        predictions = self.predict(test_bags)
-        accuracy = np.average(test_labels == np.sign(predictions))
-        precision, recall, f1 = compute_metrics(test_labels, predictions)
+        predictions = (self.predict(test_bags) > 0).astype(int)
+        accuracy, precision, recall, f1 = compute_metrics(predictions, test_labels)
         print(f"Accuracy: {100*accuracy}, Precision: {precision}, Recall: {recall}, F1: {f1}")
         
 

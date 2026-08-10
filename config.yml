@@ -14,6 +14,15 @@ extractors:
         r101_1x_sk0:
           dimensionality: 100
 
+  plip:
+      version_id: "vinid/plip"
+      auth_token: null
+      num_labels: 512
+
+      versions:
+        vinid/plip:
+          dimensionality: 512
+
   dino:
       version_id: "vit_small" # [resnet50 (test with synthetical dataset), vit_small, vit_base]
       custom_weights: True # Only for vit_small

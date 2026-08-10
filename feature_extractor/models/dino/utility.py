@@ -92,5 +92,6 @@ def load_custom_weights(model, checkpoint_path, checkpoint_key, dataset_name, sc
     state_dict = {k.replace("backbone.", ""): v for k, v in state_dict.items()}
     state_dict = {k.replace("head.", ""): v for k, v in state_dict.items()}
     
-    model.load_state_dict(state_dict, strict=False)
+    msg = model.load_state_dict(state_dict, strict=False)
+    print('Custom weights loaded from {} with msg: {}'.format(output_path, msg))
     

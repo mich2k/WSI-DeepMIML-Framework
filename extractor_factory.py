@@ -13,14 +13,11 @@ def build_extractor(config, dataloader=None, custom_weights=False, num_labels=10
     fallback_extractor = 'simclr_v2'
 
     try:
-        versions_dict = config.extractors[config.using_extractor].versions
-    except KeyError:
-        versions_dict = config.extractors[fallback_extractor].versions
-
-    try:
         extractor_conf = config.extractors[config.using_extractor]
+        versions_dict = extractor_conf.versions
         return ext_factory[config.using_extractor](config.trainset_path, config.checkpoint_path, versions_dict, extractor_conf)
 
-    except NotImplementedError as e:
+    except (NotImplementedError, KeyError) as e:
         print(f"Error: {e} - Using default fallback extractor - {config.using_extractor} not implemented.")
-        return ext_factory[fallback_extractor](dataloader, config.checkpoint_path, versions_dict)
+        extractor_conf = config.extractors[fallback_extractor]
+        return ext_factory[fallback_extractor](config.trainset_path, config.checkpoint_path, extractor_conf.versions, extractor_conf)

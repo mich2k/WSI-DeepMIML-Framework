@@ -78,9 +78,10 @@ class FastMIML(Baseline):
             else:
                 idx_irr = np.where(train_targets[idx_ins, :] != 1)[0]
             n_irr = len(idx_irr)
+            fyn = -np.inf
 
 
-            Wy=W[:, idx_class*num_sub : (idx_class+1)*num_sub] 
+            Wy=W[:, idx_class*num_sub : (idx_class+1)*num_sub]
     #         print('shape of Wy',Wy.shape)
     #         print('shape of V', V.shape)
 
@@ -131,7 +132,7 @@ class FastMIML(Baseline):
                 trounds += 1
                 Wyn = W[:, (idx_pick)*num_sub + idx_max_pick]
     #             print('shape of Wyn: ',Wyn.shape)
-                loss = costs[int(np.floor(n_irr/(j+1)))]
+                loss = costs[min(int(np.floor(n_irr/(j+1))), len(costs)-1)]
 
            # ''' Now weights are updated using gradient descent and stored in tmp1'''
                 tmp1 = Wy + step_size * loss * Vbag[:, idx_max_ins1]
@@ -263,9 +264,14 @@ class FastMIML(Baseline):
             self.W, self.V, self.AW, self.AV, self.Anum, self.trounds = self.FastMIML_train(train_data, train_targets, self.W, self.V, self.costs, self.norm_up, self.step_size, self.num_sub, self.AW, self.AV, self.Anum, self.trounds, self.lambda_reg, opts)
         
         ## test
-        _, test_labels = self.FastMIML_test(test_data, self.AW/self.Anum, self.AV/self.Anum, self.num_sub)
-            
-        accuracy, precision, recall, f1 = compute_metrics(test_labels, test_targets)
+        if self.Anum > 0:
+            W, V = self.AW/self.Anum, self.AV/self.Anum
+        else:
+            W, V = self.W, self.V
+
+        _, test_labels = self.FastMIML_test(test_data, W, V, self.num_sub)
+
+        accuracy, precision, recall, f1 = compute_metrics((test_labels > 0).astype(int), test_targets)
         
         return accuracy, precision, recall, f1
             

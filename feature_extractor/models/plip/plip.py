@@ -118,10 +118,8 @@ class PLIP(FeatureExtractor):
         # return np.argmax(cosine_sim, axis=-1)
         # return cosine_sim.argsort()[:,-top_k:][:,::-1]
 
-    def compute_features(self, x: torch.Tensor):
-        # return image features and linear projection output
+    def compute_features(self, x: torch.Tensor, eval=False):
         x = self.preprocess(images=x, return_tensors='pt').to(self.device)
         img_features = self.model.get_image_features(**x)
-        
-        # second output needs to be replaced with linear projection
-        return img_features, img_features
+
+        return img_features

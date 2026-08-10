@@ -147,8 +147,9 @@ class CitationKNN(Baseline):
         for _ in range(self.epoch):
             print("Testing")
             for inputs, labels in testloader:
-                inputs = inputs.reshape(inputs.shape[0],inputs[1].shape, -1)
-                self.test(testset.bags, testset.labels)
+                inputs = inputs.reshape(inputs.shape[0], inputs.shape[1], -1)
+                labels = labels.reshape(labels.shape[0], -1)
+                self.test(inputs, labels)
 
 def _min_hau_bag(X,Y):
     

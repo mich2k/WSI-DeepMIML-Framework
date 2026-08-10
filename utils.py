@@ -26,41 +26,40 @@ class DiffInfiniteDataset(Dataset):
         self.labels = []
         self.images = []
         
-        self.labels_csv = pd.read_csv(data_path + "annotator.csv")
+        self.labels_csv = pd.read_csv(data_path + "annotator.csv", dtype={'sample_id': str})
         data_path = data_path + "patched_presplit_out/patches/"
-        
+
+        # Load labels from csv file
+        labels_column = ['ABS_Unknown', 'ABS_Carcinoma', 'ABS_Necrosis', 'ABS_Tumor_Stroma', 'ABS_Others'] if not use_strategy else ['Unknown', 'Carcinoma', 'Necrosis', 'Tumor_Stroma', 'Others']
+
+        labels_by_sample = {}
+        for index, row in self.labels_csv.iterrows():
+            labels_by_sample[row['sample_id']] = np.array(list(row[labels_column]))
+
         # Load Images
-        for folder in tqdm(os.listdir(data_path)):
+        for folder in tqdm(sorted(os.listdir(data_path))):
             if len(self.images) == stop_at and stop_at != 0:
                 break
-            
+
+            if folder not in labels_by_sample:
+                continue
+
             bag = []
-            
-            for image_name in os.listdir(os.path.join(data_path, folder)):
-                if len(self.images) == stop_at and stop_at != 0:
-                    break
-                
+
+            for image_name in sorted(os.listdir(os.path.join(data_path, folder))):
+
                 image_path = os.path.join(data_path, folder, image_name)
-                
+
                 image = Image.open(image_path)
                 image = np.array(image)
-                image = image.reshape(image.shape[2], image.shape[0], image.shape[1])
-                
+                image = np.transpose(image, (2, 0, 1))
+
                 bag.append(image)
-                
+
             if bag:  # Ensure the bag is not empty
                 self.images.append(np.array(bag))
-            
-        # Load labels from csv file
-        labels_column = ['Unknown', 'Carcinoma', 'Necrosis', 'Tumor_Stroma', 'Others'] if not use_strategy else ['ABS_Unknown', 'ABS_Carcinoma', 'ABS_Necrosis', 'ABS_Tumor_Stroma', 'ABS_Others']
-        
-        for index, row in self.labels_csv.iterrows():
-            if len(self.labels) == stop_at and stop_at != 0:
-                break
-            
-            l = list(row[labels_column])
-            self.labels.append(np.array(l))
-        
+                self.labels.append(labels_by_sample[folder])
+
         # Convert lists to numpy arrays
         self.images = np.array(self.images)
         self.labels = np.array(self.labels)
@@ -202,26 +201,21 @@ def binary_relevance_transformation(images, labels, nested_array=True, get_bags 
         
         # For each element in the batch
         for i in range(batch_size):
-            
+
             if len(mi_features) == stop_at and stop_at != 0:
                 break
-            
-            bag = []
-            
+
             # For each label related to a single bag
             for j in range(labels.shape[1]):
-                
+
+                bags.append(np.array([len(mi_features)]))
+
                 mi_features.append(images[i])
                 if nested_array:
                     mi_labels.append([labels[i][j]])
                 else:
                     mi_labels.append(labels[i][j])
-                    
-                if get_bags:
-                    bag.append(i + j)
-                
-                bags.append(np.array(bag))
-        
+
         if get_bags:
             return np.array(mi_features), np.array(mi_labels), bags
         
@@ -229,35 +223,28 @@ def binary_relevance_transformation(images, labels, nested_array=True, get_bags 
     
 
 def compute_metrics(pred, target):
-    
-    
-    pred = torch.sigmoid(pred)
 
-    
     # Check if it is a numpy array
     if isinstance(pred, torch.Tensor):
-        pred = pred.cpu().detach().numpy()
-        
+        pred = torch.sigmoid(pred).cpu().detach().numpy()
+    elif hasattr(pred, 'toarray'):
+        pred = pred.toarray()
+
     if isinstance(target, torch.Tensor):
         target = target.cpu().detach().numpy()
-        
-    """Class 0: Mean AUC = 0.8818
-        Class 1: Mean AUC = 0.8602
-        Class 2: Mean AUC = 0.8860
-        Class 3: Mean AUC = 0.8739
-        Class 4: Mean AUC = 0.8932
-        """
-        
-    thresholds = [0.8818, 0.8602, 0.8860, 0.8739, 0.8932]
-    
-    # check if target has continous values or integers 
-    if 'float' not in target.dtype.name:
-        # apply thresholds to each pred class
-        for i in range(len(pred)):
-            pred[i] = pred[i] > thresholds[i]
+    elif hasattr(target, 'toarray'):
+        target = target.toarray()
 
-        
-            
+    pred = np.asarray(pred)
+    target = np.asarray(target)
+
+    # check if predictions/targets hold continous values or integers
+    if pred.dtype.kind == 'f':
+        pred = (pred >= 0.5).astype(int)
+
+    if target.dtype.kind == 'f':
+        target = (target >= 0.5).astype(int)
+
     # Compute precision, recall, f1-score
     accuracy = accuracy_score(target, pred)
     precision = precision_score(target, pred, average='weighted', zero_division=0)

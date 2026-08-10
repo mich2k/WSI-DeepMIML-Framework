@@ -129,24 +129,8 @@ class MLkNN(Baseline, object):
     def test(self, X, y):
         data,target = X, y
 
-        kf = KFold(n_splits=10, shuffle=True, random_state=2017)
-        for tr_index,val_index in kf.split(data):
-            tr_X,val_X = data[tr_index],data[val_index]
-            tr_Y,val_Y = target[tr_index],target[val_index]
-            
-            self.train_data = tr_X
-            self.train_target = tr_Y
-            self.k = 10
-            self.labels_num = tr_Y.shape[1]
-            self.train_data_num = self.train_data.shape[0]
-            self.Ph1 = np.zeros((self.labels_num,))
-            self.Ph0 = np.zeros((self.labels_num,))
-            self.Peh1 = np.zeros((self.labels_num, self.k + 1))
-            self.Peh0 = np.zeros((self.labels_num, self.k + 1))
-                        
-            #self.fit()
-            labels = self.predict(val_X)
-            self.evaluate(val_Y)
+        labels = self.predict(data)
+        self.evaluate(target)
 
     def run(self, trainset, testset, feature_extractor):
         
@@ -160,7 +144,7 @@ class MLkNN(Baseline, object):
                 for inputs, labels in trainloader:
                     input_list = []
                     for i in range(len(inputs)):
-                        input_list.append(feature_extractor.compute_features(inputs[i].float().cuda()).cpu())
+                        input_list.append(feature_extractor.compute_features(inputs[i].float().to(self.device)).detach().cpu())
 
                     input_arr = np.vstack(input_list)
                     input_feats = input_arr.reshape(inputs.shape[0], inputs.shape[1], -1)
@@ -172,11 +156,11 @@ class MLkNN(Baseline, object):
                 for inputs, labels in testloader:
                     input_list = []
                     for i in range(len(inputs)):
-                        input_list.append(feature_extractor.compute_features(inputs[i].float().cuda()).cpu())
+                        input_list.append(feature_extractor.compute_features(inputs[i].float().to(self.device)).detach().cpu())
 
                     input_arr = np.vstack(input_list)
                     input_feats = input_arr.reshape(inputs.shape[0], inputs.shape[1], -1)
                     labels = labels.reshape(labels.shape[0], -1)
-                    self.test(inputs, labels)
+                    self.test(input_feats, labels)
         
         
